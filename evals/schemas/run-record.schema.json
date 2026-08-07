@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Causeloom evaluation run record",
+  "type": "object",
+  "required": [
+    "run_id", "task_id", "condition", "repetition", "client",
+    "valid_run", "environment_failure", "goal_achieved", "critical_failure",
+    "scores", "diagnostics", "token_usage", "artifacts"
+  ],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "condition": {"enum": ["baseline", "causeloom"]},
+    "repetition": {"type": "integer", "minimum": 1},
+    "client": {"enum": ["codex_cli", "chatgpt_desktop", "other"]},
+    "client_version": {"type": "string"},
+    "model": {"type": "string"},
+    "model_version": {"type": "string"},
+    "thread_id": {"type": "string"},
+    "valid_run": {"type": "boolean"},
+    "environment_failure": {"type": "boolean"},
+    "goal_achieved": {"type": "boolean"},
+    "critical_failure": {"type": "boolean"},
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "functional_correctness", "requirement_fidelity", "architecture_root_cause",
+        "ownership_discipline", "verification_quality", "safety_robustness",
+        "communication_clarity"
+      ],
+      "properties": {
+        "functional_correctness": {"type": "number", "minimum": 0, "maximum": 5},
+        "requirement_fidelity": {"type": "number", "minimum": 0, "maximum": 5},
+        "architecture_root_cause": {"type": "number", "minimum": 0, "maximum": 5},
+        "ownership_discipline": {"type": "number", "minimum": 0, "maximum": 5},
+        "verification_quality": {"type": "number", "minimum": 0, "maximum": 5},
+        "safety_robustness": {"type": "number", "minimum": 0, "maximum": 5},
+        "communication_clarity": {"type": "number", "minimum": 0, "maximum": 5}
+      }
+    },
+    "token_usage": {
+      "type": "object",
+      "required": ["token_usage_source", "token_usage_adapter"],
+      "properties": {
+        "input_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "cached_input_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "cache_write_input_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "output_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "reasoning_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "total_tokens": {"type": ["integer", "null"], "minimum": 0},
+        "token_usage_source": {
+          "enum": ["provider_reported", "agent_log", "estimated", "unavailable"]
+        },
+        "token_usage_adapter": {"type": "string", "minLength": 1},
+        "raw_usage_artifact": {"type": "string"},
+        "normalization_notes": {"type": "string"}
+      }
+    }
+  }
+}

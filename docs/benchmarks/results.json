@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "project": "Causeloom",
+  "release": "0.3.0",
+  "benchmark": {
+    "suite": "Terminal-Bench 2.0",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high",
+    "codex_cli": "0.146.0",
+    "run_order_seed": 329,
+    "tasks": 13,
+    "repetitions_per_cell": 3,
+    "evaluated_policy_sha256": "1f94841a1edc6767277c666b5b0e57ba00f8b61046010c40d10fc9c38882df2e",
+    "release_policy_sha256": "d4c313db9a48368c3ae0044c6f4686feb774c8d1a5c03d5b5d9b837d54753797",
+    "release_policy_difference": "Branding, frontmatter metadata, heading, and attribution only; operational sections 1-8 and Anti-patterns are unchanged.",
+    "old_audit_sha256": "ec597ac1ce5b73b4d2063fecf2e56fb9c3e7b01628d890272002c4b84569910e",
+    "incremental_audit_sha256": "40cf0f2db3088e8e256f0efe2d8fd75cfa5222df7d44e33150281b23cc5d8239"
+  },
+  "full_13_task_context": {
+    "description": "Thirteen tasks with three repetitions. Causeloom uses 39 a5 trials; the no-skill baseline uses 27 a5 trials and 12 completed historical a3 trials. Descriptive two-phase context, not a fully matched causal estimate.",
+    "conditions": [
+      {
+        "name": "No-skill baseline",
+        "runs": 39,
+        "reward_1": 20,
+        "exception_free_reward_1": 19,
+        "timeouts": 4,
+        "mean_tokens_per_attempted_run": 420488,
+        "mean_tokens_per_successful_run": 397829,
+        "a5_runs": 27,
+        "a3_runs": 12
+      },
+      {
+        "name": "Causeloom",
+        "runs": 39,
+        "reward_1": 27,
+        "exception_free_reward_1": 25,
+        "timeouts": 4,
+        "mean_tokens_per_attempted_run": 523594,
+        "mean_tokens_per_successful_run": 539583,
+        "a5_runs": 39,
+        "a3_runs": 0
+      }
+    ]
+  }
+}

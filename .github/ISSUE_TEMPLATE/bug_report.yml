@@ -1,0 +1,40 @@
+name: Skill behavior bug
+description: Report a concrete task where the skill caused undesirable coding behavior
+title: "[behavior] "
+labels: [behavior-bug]
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: Task and repository context
+      description: Provide a minimal public fixture or anonymized reproduction.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed behavior
+      description: What unnecessary, incorrect, unsafe, or unclear behavior occurred?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model and version
+    validations:
+      required: true
+  - type: input
+    id: checksum
+    attributes:
+      label: Skill SHA-256
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Verification, token usage, and logs
+      description: Do not include secrets or private repository content.

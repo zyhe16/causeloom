@@ -1,0 +1,25 @@
+name: Evaluation result
+description: Share a reproducible benchmark result or regression
+labels: [evaluation]
+body:
+  - type: textarea
+    id: setup
+    attributes:
+      label: Frozen setup
+      description: Model, version, conditions, tasks, repetitions, budgets, tools, and skill checksums.
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results
+      description: Include qualified success, critical failures, ownership among qualified runs, and token accounting coverage.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Reproduction artifacts
+      description: Link to run matrix, scored CSV, patches, and summary outputs.
+    validations:
+      required: true

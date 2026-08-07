@@ -1,0 +1,61 @@
+{
+  "run_id": "",
+  "task_id": "",
+  "condition": "baseline",
+  "repetition": 1,
+  "client": "codex_cli",
+  "client_version": "",
+  "model": "",
+  "model_version": "",
+  "thread_id": "",
+  "skill_sha256": "",
+  "repo_sha256_or_commit": "",
+  "started_at": "",
+  "finished_at": "",
+  "valid_run": true,
+  "environment_failure": false,
+  "clarification_behavior": "not_applicable",
+  "public_checks_pass": "na",
+  "hidden_checks_pass": "na",
+  "goal_achieved": false,
+  "critical_failure": false,
+  "scores": {
+    "functional_correctness": 0,
+    "requirement_fidelity": 0,
+    "architecture_root_cause": 0,
+    "ownership_discipline": 0,
+    "verification_quality": 0,
+    "safety_robustness": 0,
+    "communication_clarity": 0
+  },
+  "diagnostics": {
+    "files_changed": 0,
+    "net_lines_added": 0,
+    "net_lines_removed": 0,
+    "new_production_dependencies": 0,
+    "new_configuration_keys": 0,
+    "new_abstractions": 0,
+    "tool_calls": 0,
+    "elapsed_seconds": 0
+  },
+  "token_usage": {
+    "input_tokens": null,
+    "cached_input_tokens": null,
+    "cache_write_input_tokens": null,
+    "output_tokens": null,
+    "reasoning_tokens": null,
+    "total_tokens": null,
+    "token_usage_source": "unavailable",
+    "token_usage_adapter": "unavailable",
+    "raw_usage_artifact": "",
+    "normalization_notes": ""
+  },
+  "artifacts": {
+    "patch": "",
+    "final_response": "",
+    "event_log": "",
+    "public_check_log": "",
+    "hidden_check_log": "",
+    "diff_metrics": ""
+  }
+}

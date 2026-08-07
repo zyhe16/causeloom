@@ -1,0 +1,14 @@
+suite_task_id,tier,upstream_benchmark,upstream_version,upstream_task_id,author_difficulty,paper_empirical_order,capability,task_url
+M01,medium,Terminal-Bench,2.0,custom-memory-heap-crash,medium,12/89,C++ release-only crash and allocator debugging,https://www.tbench.ai/benchmarks/terminal-bench-2/custom-memory-heap-crash
+M02,medium,Terminal-Bench,2.0,git-multibranch,medium,16/89,Git SSH hooks Nginx TLS and branch-specific deployment,https://www.tbench.ai/benchmarks/terminal-bench-2/git-multibranch
+M03,medium,Terminal-Bench,2.0,sqlite-with-gcov,medium,18/89,offline source build and coverage instrumentation,https://www.tbench.ai/benchmarks/terminal-bench-2/sqlite-with-gcov
+X01,extreme,Terminal-Bench,2.0,llm-inference-batching-scheduler,hard,52/89,constrained performance optimization and scheduling,https://www.tbench.ai/benchmarks/terminal-bench-2/llm-inference-batching-scheduler
+X02,extreme,Terminal-Bench,2.0,make-doom-for-mips,hard,89/89,cross-compile and integrate Doom for a JavaScript MIPS emulator,https://www.tbench.ai/benchmarks/terminal-bench-2/make-doom-for-mips
+X03,extreme,Terminal-Bench,2.0,db-wal-recovery,medium,66/89,corrupt and encrypted SQLite WAL recovery,https://www.tbench.ai/benchmarks/terminal-bench-2/db-wal-recovery
+X04,extreme,Terminal-Bench,2.0,torch-tensor-parallelism,hard,70/89,distributed tensor sharding forward backward and gradients,https://www.tbench.ai/benchmarks/terminal-bench-2/torch-tensor-parallelism
+X05,extreme,Terminal-Bench,2.0,make-mips-interpreter,hard,81/89,JavaScript MIPS ELF interpreter capable of booting Doom,https://www.tbench.ai/benchmarks/terminal-bench-2/make-mips-interpreter
+X06,extreme,Terminal-Bench,2.0,torch-pipeline-parallelism,hard,85/89,distributed AFAB pipeline-parallel LLaMA training,https://www.tbench.ai/benchmarks/terminal-bench-2/torch-pipeline-parallelism
+X07,extreme,Terminal-Bench,2.0,filter-js-from-html,medium,86/89,robust XSS removal with benign HTML preservation,https://www.tbench.ai/benchmarks/terminal-bench-2/filter-js-from-html
+C01,coverage,Terminal-Bench,2.0,modernize-scientific-stack,medium,1/89,low-ambiguity Python modernization and dependency declaration,https://www.tbench.ai/benchmarks/terminal-bench-2/modernize-scientific-stack
+C02,coverage,Terminal-Bench,2.0,kv-store-grpc,medium,25/89,conventional gRPC backend API and live server entrypoint,https://www.tbench.ai/benchmarks/terminal-bench-2/kv-store-grpc
+C03,coverage,Terminal-Bench,2.0,fix-code-vulnerability,hard,27/89,surgical existing-repository CRLF injection repair and CWE reporting,https://www.tbench.ai/benchmarks/terminal-bench-2/fix-code-vulnerability

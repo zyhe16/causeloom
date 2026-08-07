@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: "Causeloom"
+message: "Please cite this software using the metadata in this file."
+type: software
+authors:
+  - family-names: "He"
+    given-names: "Zhiyong"
+    alias: "zyhe16"
+version: "0.3.0"
+date-released: 2026-08-07
+license: MIT
+repository-code: "https://github.com/zyhe16/causeloom"
+abstract: >-
+  An instruction-only coding-agent skill and systematic evaluation framework
+  for root-cause engineering, proportionate rigor, justified lifecycle
+  ownership, and verified closure.
+keywords:
+  - agent-skills
+  - coding-agents
+  - software-engineering
+  - evaluation
+  - prompt-engineering
