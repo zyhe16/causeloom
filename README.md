@@ -8,12 +8,12 @@
   <img src="https://img.shields.io/badge/license-MIT-356ae6.svg" alt="MIT License">
 </p>
 
-Causeloom is an instruction-only engineering skill for coding agents. It keeps
-an agent focused on the real requirement, the layer that owns it, and the final
-entrypoint that proves the work is done.
+Causeloom is a set of instructions for coding agents. It helps an agent
+understand what you asked for, fix the real cause, test the result people will
+actually use, and avoid unnecessary code.
 
 **In a 39-attempt benchmark, Causeloom completed 27 attempts versus 20 for the
-same agent with no additional skill.**
+same agent without the skill.**
 
 ```text
 Understand -> Bound -> Change -> Verify -> Simplify -> Stop
@@ -21,20 +21,21 @@ Understand -> Bound -> Change -> Verify -> Simplify -> Stop
 
 ## Why use it?
 
-Coding agents commonly fail in two opposite directions: they make the smallest
-wrong patch, or build a large speculative system around a misunderstood
-problem. Causeloom treats both as failures of causal scope.
+Coding agents often do too little or too much. They may make a small patch that
+does not solve the real problem, or build a large solution for something
+simple. Causeloom guides the agent toward work that is correct, focused, and
+properly tested.
 
 | Without Causeloom | With Causeloom |
 |---|---|
-| Silently commits to an assumption | Resolves ambiguity by consequence |
-| Patches the visible symptom | Finds the authoritative owner |
-| Adds compatibility “just in case” | Demands evidence for lifecycle cost |
-| Stops when code compiles | Verifies the real entrypoint |
-| Keeps scaffolding from exploration | Simplifies the finished diff |
+| Guesses and starts coding | Checks important assumptions first |
+| Fixes only what looks broken | Finds and fixes the real cause |
+| Adds features for imagined future needs | Adds only what the task needs |
+| Stops when the code builds | Tests the result people will actually use |
+| Leaves temporary or unused code | Cleans up before finishing |
 
-It is not “write the fewest lines.” Correctness is the gate; simplicity is what
-remains after the requirement is actually satisfied.
+Causeloom does not mean “write the fewest lines.” The solution must first be
+correct and safe. Then it should be made as simple as possible.
 
 ## Install
 
@@ -50,13 +51,13 @@ npx skills add zyhe16/causeloom
 
 ### Ask your coding agent
 
-Alternatively, ask an agent to choose the correct user-level directory:
+Alternatively, ask an agent to install it for you:
 
 ```text
 Install Causeloom from https://github.com/zyhe16/causeloom using
-`npx skills add zyhe16/causeloom`. Select the appropriate agent harness, verify
-that the installed skill is named `causeloom`, validate its SKILL.md, and do
-not modify unrelated files.
+`npx skills add zyhe16/causeloom`. Select the correct coding tool, verify that
+the installed skill is named `causeloom`, validate its SKILL.md, and do not
+modify unrelated files.
 ```
 
 Invoke the installed skill with `$causeloom`; in ChatGPT desktop, type `@` and
@@ -65,61 +66,77 @@ select **Causeloom**. More details are in
 
 ## Results
 
-All 13 selected problems come from
+All 13 benchmark problems come from
 [Terminal-Bench 2.0](https://www.tbench.ai/benchmarks/terminal-bench-2), with
-three attempts per condition for each problem.
+three attempts per problem for both Causeloom and the baseline.
 
 ![Official reward across all 39 attempts](docs/assets/benchmark-full.svg)
 
-| Condition | Official successes | Exception-free successes | Timeouts | Mean tokens / attempt |
+| Setup | Passed runs | Passes without exceptions | Timeouts | Average tokens per run |
 |---|---:|---:|---:|---:|
 | No-skill baseline | 20/39 (51.3%) | 19/39 | 4 | 420,488 |
 | **Causeloom** | **27/39 (69.2%)** | **25/39** | 4 | 523,594 |
 
-That is a **+17.9 percentage-point** raw success-rate difference and six more
-exception-free completions. Causeloom used about **24.5% more tokens per
-attempt**. The extra usage is consistent with what the skill asks the agent to
-do: trace ownership, test plausible boundaries, verify the runnable entrypoint,
-and perform a final simplification/closure pass. Tokens are therefore a cost
-tradeoff, not a quality score—and this benchmark does not isolate which step
-caused the increase.
+> [!IMPORTANT]
+> We split the benchmark into two batches to avoid spending tokens on runs that
+> had already finished. For every earlier baseline problem where at least one of
+> its three runs reached the shorter time limit, we reran all three runs with the
+> longer limit. We reused only 12 earlier baseline runs whose three-run groups
+> finished within the shorter limit. Those 12 were not selected by score: 8
+> passed the automated tests and 4 failed. Reuse depended only on timeout status.
+> The combined result is **descriptive evidence, not a fully matched causal estimate**.
+> See [Method, briefly](#method-briefly).
+
+That is a **17.9 percentage-point** increase in the raw pass rate and six more
+passes without exceptions. Causeloom used about **24.5% more tokens per run**.
+This is consistent with the extra work the skill asks for: reading the relevant
+code, checking assumptions, testing the program people will run, and cleaning
+up before finishing. Token use is a cost, not a quality score, and this
+benchmark cannot tell us exactly which step caused the increase.
 
 ### Where the difference appeared
 
 ![Tasks with official Causeloom successes and zero baseline successes](docs/assets/benchmark-causeloom-only-wins.svg)
 
-Across these four technically complex tasks, Causeloom produced **6 official
-successes in 12 attempts; the baseline produced 0**. The Doom success passed
-all verifier checks but is timeout-flagged, so it is shown as official reward,
-not as an exception-free completion.
+On these four harder technical problems, Causeloom produced **6 passes in 12
+runs; the baseline produced 0**.
+
+> [!WARNING]
+> One Doom run passed every automated check but also reached the time limit. It
+> counts as a pass, but not as a pass without exceptions.
 
 ### Method, briefly
 
 - GPT-5.6 Sol, high reasoning, Codex CLI 0.146.0
-- Terminal-Bench 2.0, 13 tasks, 3 repetitions, isolated Harbor containers
+- Terminal-Bench 2.0, 13 problems, 3 runs each, isolated Harbor containers
 - 3 medium integration/build tasks, 7 extreme systems workflows, 3 targeted
   coverage tasks
-- Agent internet access blocked; official verifier reward is the correctness
-  measure
+- No internet access during tasks; automated test results decide whether a run
+  passes
 
-The evaluation ran in two phases to avoid unnecessary reruns. Twelve completed
-baseline cells came from the earlier phase and used its shorter timeout
-contract. Both phases used the same task selection, model family, repetitions,
-and run-order seed, but a shared seed does not make hosted model trajectories
-deterministic. The combined view is **descriptive evidence, not a fully matched
-causal estimate**. Full provenance, hashes, task selection, and reproduction
-notes are in [`docs/benchmarks`](docs/benchmarks/) and [`evals`](evals/).
+The second batch added three problems and doubled the agent time limits. For
+each earlier baseline problem affected by a timeout, all three runs were
+repeated under the longer limit. Both batches used the same model family,
+number of runs per problem, and ordering seed. However, a shared seed does not
+make hosted model trajectories deterministic. Technical details, file hashes,
+and instructions for repeating the benchmark are in
+[`docs/benchmarks`](docs/benchmarks/) and [`evals`](evals/).
 
 ## Code-quality review
 
-**Codex with GPT-5.6 Sol** reviewed preserved final artifacts and verifier traces.
-This was a post-hoc engineering review, not a blinded numeric score. These are
-abridged excerpts from actual benchmark submissions.
+> [!NOTE]
+> This review happened after the benchmark and was not blind. It did not give
+> the code a numeric score. The automated benchmark results above remain the
+> main score.
 
-### 1. Preserve a valid distributed boundary
+**Codex with GPT-5.6 Sol** reviewed the saved final code and automated test
+results. The examples below are shortened excerpts from real benchmark
+submissions.
 
-The baseline rejected the already-local tensor shard used by the row-parallel
-caller:
+### 1. Accept both valid input shapes
+
+The baseline accepted only the full tensor. The test gave it the smaller piece
+already assigned to that worker, so it rejected a valid input:
 
 ```python
 if input.size(-1) != self.in_features:
@@ -127,7 +144,8 @@ if input.size(-1) != self.in_features:
 local_input = _ScatterLastDimension.apply(input, self.world_size, self.rank)
 ```
 
-Causeloom accepted either valid boundary and only sliced the full form:
+Causeloom accepted both valid input shapes. It split the tensor only when it
+received the full one:
 
 ```python
 if input.size(-1) == self.in_features_per_rank:
@@ -139,32 +157,32 @@ else:
     raise ValueError(...)
 ```
 
-Result: Causeloom passed all column/row, world-size, bias, forward, and gradient
-checks; the baseline failed the row-parallel contract.
+Result: Causeloom passed every tensor-parallel test, including output and
+gradient checks. The baseline failed the row-parallel test.
 
-### 2. Match communication order to gradient ownership
+### 2. Keep messages and gradients in the right order
 
-The baseline reversed the AFAB backward microbatch order:
+The baseline processed the backward steps in reverse order:
 
 ```python
 for microbatch_index in range(microbatch_count - 1, -1, -1):
     ...
 ```
 
-Causeloom kept the verified FIFO pairing between stage sends and receives:
+Causeloom kept them in the order expected by the messages sent between workers:
 
 ```python
 for microbatch_index in range(num_microbatches):
     ...
 ```
 
-Result: Causeloom passed the two-rank forward/backward comparison; the baseline
-produced a layer-gradient mismatch.
+Result: Causeloom passed the two-worker comparison. The baseline produced the
+wrong gradient for one layer.
 
-### 3. Build for the runtime that actually executes the artifact
+### 3. Test the program people will actually run
 
-The baseline produced an ELF, but its runtime never emitted the requested
-frame:
+The baseline built a program file, but running it never produced the requested
+image:
 
 ```make
 CROSS ?= mips-linux-gnu-
@@ -173,7 +191,8 @@ LDFLAGS := -EL -m elf32ltsmip -T mips_vm.ld
 # ... my_stdlib.c
 ```
 
-Causeloom aligned the target, linker, and small libc shim with the supplied VM:
+Causeloom used compiler and linker settings that matched the supplied virtual
+machine:
 
 ```make
 CC := clang
@@ -182,49 +201,49 @@ $(LD) -m elf32ltsmip -static -T mips.ld -o $@ $(OBJECTS)
 # ... vm_libc.c
 ```
 
-Result: `node vm.js` produced the frame and the verifier passed execution,
-existence, and image-similarity checks. This run later hit the agent time limit,
-which is why the success remains timeout-flagged.
+Result: `node vm.js` produced the image and passed all three checks: the program
+ran, the image existed, and it matched the reference. This is the timeout-marked
+run described above.
 
-The useful pattern across the three examples is not “more code.” It is explicit
-ownership of interface shape, communication order, and the final runtime
-contract. The main review risk was the opposite: on source-preserving HTML
-sanitization, Causeloom overbuilt custom parsers that still failed preservation.
+The lesson from these examples is not “write more code.” It is: accept the
+right inputs, keep steps in the right order, and test the finished program. The
+review also found a weakness. On an HTML cleaning task, Causeloom built large
+custom parsers that still changed safe HTML and missed a harmful case.
 
 ## Strengths and tradeoffs
 
-| Strong fit | Tradeoffs |
+| Works well for | Limits |
 |---|---|
-| Distributed or stateful code with multiple owners | More inspection and verification can cost more tokens |
-| Cross-builds and multi-step runtime delivery | It can still overbuild when preservation should dominate |
-| Ambiguous boundaries where cheap compatibility is possible | Same number of timeout-flagged attempts in this benchmark |
-| Work that needs an auditable final artifact | Evidence is one model and one 13-task suite |
+| Code where several parts share data or state | Extra reading and testing can use more tokens |
+| Builds that involve several tools or steps | It can still build too much for some tasks |
+| Inputs that can arrive in more than one valid form | It had the same number of timed-out runs in this benchmark |
+| Work that must be easy to inspect and review | The evidence comes from one model and 13 problems |
 
 ## How it works
 
 The policy asks the agent to:
 
-1. Translate the request into observable success checks.
-2. Trace the owning cause before changing code.
-3. Choose the smallest intervention that can be correct.
-4. Validate boundaries and compatibility in proportion to risk.
-5. Verify the final entrypoint—not an intermediate approximation.
-6. Remove unjustified machinery and stop when evidence is sufficient.
+1. Turn the request into clear checks for success.
+2. Find the real cause before changing code.
+3. Make the smallest change that fully solves the problem.
+4. Check valid inputs and make sure existing behavior still works.
+5. Test the final program, not only one step along the way.
+6. Remove extra code and stop when there is enough proof that it works.
 
 Read the complete policy in [`SKILL.md`](SKILL.md) and its rationale in
 [`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Motivation
 
-Causeloom is strongly motivated by two thoughtful projects that champion direct,
-simple solutions:
+Causeloom is strongly motivated by two projects that encourage direct, simple
+solutions:
 
 - [Karpathy Guidelines](https://github.com/multica-ai/andrej-karpathy-skills)
 - [Ponytail](https://github.com/DietrichGebert/ponytail)
 
-It extends that motivation with consequence-based ambiguity, lifecycle
-ownership, preservation, authoritative boundary placement, risk-scaled
-verification, simplification, and verified closure.
+It adds a stronger focus on asking useful questions, putting fixes in the right
+place, keeping existing behavior safe, testing according to risk, cleaning up,
+and finishing with proof that the result works.
 
 ## Develop
 
@@ -234,10 +253,9 @@ make package
 make package-repo
 ```
 
-The repository contains the canonical skill, deterministic packaging, public
-baseline evaluation tooling, and chart-ready evidence. Raw sessions, private
-calibration policies, caches, logs, and generated archives stay out of source
-history.
+The repository contains the skill, repeatable packaging tools, benchmark tools,
+and the data used in the charts. Large raw benchmark files, private comparison
+rules, caches, logs, and generated archives are not stored in Git.
 
 ## License
 
