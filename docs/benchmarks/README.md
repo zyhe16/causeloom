@@ -17,17 +17,15 @@ does not make a hosted model deterministic. Treat the combined chart as
 descriptive evidence rather than a fully matched causal estimate.
 
 The mean-token fields in [`results.json`](results.json) come from preserved raw
-records: the arithmetic mean across all attempted runs and the arithmetic mean
-among runs with official reward 1. Tokens are cost diagnostics, not quality
-scores.
+records. The public README reports the arithmetic mean across all attempted
+runs. Tokens are cost diagnostics, not quality scores.
 
 ## Code-quality evidence
 
-The README also summarizes an exploratory, post-hoc review of 15 pre-rc.3
-Causeloom code artifacts across five code-bearing tasks. That review inspected
-final code structure and representative successes and failures but was not
-blinded and did not assign a subjective numeric score. It is therefore reported
-separately from official verifier reward.
+The README also summarizes a post-hoc review by Codex with GPT-5.6 Sol. It uses
+actual preserved final artifacts and verifier traces from three matched a5
+comparisons. The review was not blinded and did not assign a subjective numeric
+score, so it remains separate from official verifier reward.
 
 ## Reproduce the figure
 
@@ -35,8 +33,9 @@ separately from official verifier reward.
 python docs/benchmarks/generate_charts.py
 ```
 
-The generator uses only the Python standard library and writes
-[`benchmark-full.svg`](../assets/benchmark-full.svg).
+The generator uses only the Python standard library and writes the full result
+chart plus a matched task chart limited to cells where Causeloom recorded an
+official success and the baseline recorded none.
 
 ## Audit provenance
 

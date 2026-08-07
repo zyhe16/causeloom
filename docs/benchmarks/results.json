@@ -42,5 +42,39 @@
         "a3_runs": 0
       }
     ]
+  },
+  "causeloom_only_successes": {
+    "description": "Contemporaneous a5 task cells where Causeloom recorded at least one official reward-1 result and the no-skill baseline recorded none. Each condition has three attempts per task.",
+    "tasks": [
+      {
+        "task_id": "X02",
+        "label": "Doom MIPS cross-build",
+        "baseline_reward_1": 0,
+        "causeloom_reward_1": 1,
+        "runs_per_condition": 3,
+        "note": "The Causeloom reward-1 attempt passed all verifier checks but is timeout-flagged."
+      },
+      {
+        "task_id": "X03",
+        "label": "SQLite WAL recovery",
+        "baseline_reward_1": 0,
+        "causeloom_reward_1": 3,
+        "runs_per_condition": 3
+      },
+      {
+        "task_id": "X04",
+        "label": "Tensor parallelism",
+        "baseline_reward_1": 0,
+        "causeloom_reward_1": 1,
+        "runs_per_condition": 3
+      },
+      {
+        "task_id": "X06",
+        "label": "Pipeline parallelism",
+        "baseline_reward_1": 0,
+        "causeloom_reward_1": 1,
+        "runs_per_condition": 3
+      }
+    ]
   }
 }

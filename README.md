@@ -1,48 +1,44 @@
-# Causeloom
+<h1 align="center">Causeloom</h1>
 
-**From root cause to verified closure.**
+<p align="center"><strong>From root cause to verified closure.</strong></p>
 
-[![CI](https://github.com/zyhe16/causeloom/actions/workflows/ci.yml/badge.svg)](https://github.com/zyhe16/causeloom/actions/workflows/ci.yml)
-[![MIT License](https://img.shields.io/badge/license-MIT-356ae6.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-172033.svg)](VERSION)
+<p align="center">
+  <a href="https://github.com/zyhe16/causeloom/actions/workflows/ci.yml"><img src="https://github.com/zyhe16/causeloom/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/version-0.3.0-172033.svg" alt="Version 0.3.0">
+  <img src="https://img.shields.io/badge/license-MIT-356ae6.svg" alt="MIT License">
+</p>
 
-Causeloom is an instruction-only engineering skill for coding agents. It guides
-an agent to understand the real requirement, locate the owning cause, choose the
-smallest sufficient intervention, verify the intended entrypoint, simplify the
-finished diff, and stop when the evidence is strong enough.
+Causeloom is an instruction-only engineering skill for coding agents. It keeps
+an agent focused on the real requirement, the layer that owns it, and the final
+entrypoint that proves the work is done.
 
-It is not a mandate to write the fewest lines. It is a discipline for avoiding
-both under-engineering and unjustified ownership.
+**In a 39-attempt benchmark, Causeloom completed 27 attempts versus 20 for the
+same agent with no additional skill.**
 
 ```text
 Understand -> Bound -> Change -> Verify -> Simplify -> Stop
 ```
 
-## Philosophy
+## Why use it?
 
-Causeloom is built around six ideas:
+Coding agents commonly fail in two opposite directions: they make the smallest
+wrong patch, or build a large speculative system around a misunderstood
+problem. Causeloom treats both as failures of causal scope.
 
-1. **Correctness is the gate.** Small, fast, or elegant work is not valuable if
-   it misses the actual requirement.
-2. **Ambiguity is resolved by consequence.** Ask only when a choice materially
-   changes behavior, safety, compatibility, architecture, irreversible state,
-   or substantial effort.
-3. **Changes belong at the owning layer.** Fix violated invariants where they
-   are authoritative instead of scattering symptom guards.
-4. **Rigor should be proportionate.** Start with the cheapest check capable of
-   falsifying the current approach; broaden only when risk or evidence requires
-   it.
-5. **Every addition creates lifecycle ownership.** Dependencies, abstractions,
-   compatibility branches, configuration, and hooks need a present reason.
-6. **Closure is part of quality.** Verify the final entrypoint, reserve time for
-   delivery, remove abandoned machinery, and stop after sufficient evidence.
+| Without Causeloom | With Causeloom |
+|---|---|
+| Silently commits to an assumption | Resolves ambiguity by consequence |
+| Patches the visible symptom | Finds the authoritative owner |
+| Adds compatibility “just in case” | Demands evidence for lifecycle cost |
+| Stops when code compiles | Verifies the real entrypoint |
+| Keeps scaffolding from exploration | Simplifies the finished diff |
 
-The complete policy is in [`SKILL.md`](SKILL.md). Design rationale is documented
-in [`docs/DESIGN.md`](docs/DESIGN.md).
+It is not “write the fewest lines.” Correctness is the gate; simplicity is what
+remains after the requirement is actually satisfied.
 
 ## Install
 
-Ask a coding agent to install it:
+Ask your coding agent:
 
 ```text
 Install the Causeloom skill from https://github.com/zyhe16/causeloom.
@@ -56,128 +52,157 @@ Or use the Agent Skills CLI:
 npx skills add zyhe16/causeloom
 ```
 
-Or install the release archive:
+Or download [`causeloom-0.3.0.zip`](https://github.com/zyhe16/causeloom/releases/tag/v0.3.0)
+and extract it into your agent's skills directory. Invoke it explicitly with
+`$causeloom`; in ChatGPT desktop, type `@` and select **Causeloom**. More layouts
+are covered in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
-```bash
-mkdir -p ~/.agents/skills
-unzip causeloom-0.3.0.zip -d ~/.agents/skills
-```
+## Results
 
-Project-local installation uses the same directory contract:
+![Official reward across all 39 attempts](docs/assets/benchmark-full.svg)
 
-```text
-<repository>/.agents/skills/causeloom/SKILL.md
-```
+| Condition | Official successes | Exception-free successes | Timeouts | Mean tokens / attempt |
+|---|---:|---:|---:|---:|
+| No-skill baseline | 20/39 (51.3%) | 19/39 | 4 | 420,488 |
+| **Causeloom** | **27/39 (69.2%)** | **25/39** | 4 | 523,594 |
 
-Invoke it explicitly with `$causeloom`. In ChatGPT desktop, type `@` and select
-**Causeloom**. See [`docs/INSTALLATION.md`](docs/INSTALLATION.md) for other
-supported layouts.
+That is a **+17.9 percentage-point** raw success-rate difference and six more
+exception-free completions. Causeloom used about **24.5% more tokens per
+attempt**. The extra usage is consistent with what the skill asks the agent to
+do: trace ownership, test plausible boundaries, verify the runnable entrypoint,
+and perform a final simplification/closure pass. Tokens are therefore a cost
+tradeoff, not a quality score—and this benchmark does not isolate which step
+caused the increase.
 
-## Benchmark
+### Where the difference appeared
 
-Causeloom was evaluated with GPT-5.6 Sol at high reasoning through Codex CLI
-0.146.0 on a frozen thirteen-task Terminal-Bench 2.0 suite. Each condition has
-39 task attempts: 13 tasks with three repetitions. Tasks ran in isolated Harbor
-containers with agent internet access blocked. Official verifier reward is the
-correctness measure; tokens and elapsed time are diagnostics.
+![Tasks with official Causeloom successes and zero baseline successes](docs/assets/benchmark-causeloom-only-wins.svg)
 
-### What the suite covers
+Across these four technically complex tasks, Causeloom produced **6 official
+successes in 12 attempts; the baseline produced 0**. The Doom success passed
+all verifier checks but is timeout-flagged, so it is shown as official reward,
+not as an exception-free completion.
 
-| Class | Tasks | What they exercise |
-|---|---:|---|
-| Medium integration/build/debugging | 3 | Release-only C++ debugging, Git/deployment integration, offline source instrumentation |
-| Extreme systems workflows | 7 | Scheduling optimization, cross-compilation and emulation, database recovery, distributed ML runtimes, HTML/XSS transformation |
-| Targeted coverage | 3 | Low-ambiguity modernization, conventional backend/API delivery, surgical security maintenance |
+### Method, briefly
 
-Seven of thirteen tasks are in the preregistered `extreme` tier, so the suite is
-weighted toward technically complex, multi-step systems work. It is not a
-direct proxy for repository size; large existing repositories remain a useful
-future validation target.
+- GPT-5.6 Sol, high reasoning, Codex CLI 0.146.0
+- Terminal-Bench 2.0, 13 tasks, 3 repetitions, isolated Harbor containers
+- 3 medium integration/build tasks, 7 extreme systems workflows, 3 targeted
+  coverage tasks
+- Agent internet access blocked; official verifier reward is the correctness
+  measure
 
-### Results
+The evaluation ran in two phases to avoid unnecessary reruns. Twelve completed
+baseline cells came from the earlier phase and used its shorter timeout
+contract. Both phases used the same task selection, model family, repetitions,
+and run-order seed, but a shared seed does not make hosted model trajectories
+deterministic. The combined view is **descriptive evidence, not a fully matched
+causal estimate**. Full provenance, hashes, task selection, and reproduction
+notes are in [`docs/benchmarks`](docs/benchmarks/) and [`evals`](evals/).
 
-![Causeloom and the no-skill baseline across 39 task attempts](docs/assets/benchmark-full.svg)
+## Code-quality review
 
-| Condition | Reward 1 | Exception-free reward 1 | Timeouts | Mean tokens / attempted run | Mean tokens / successful run | Sources |
-|---|---:|---:|---:|---:|---:|---:|
-| No-skill baseline | 20/39 (51.3%) | 19/39 | 4 | 420,488 | 397,829 | 27 a5 + 12 a3 |
-| Causeloom | **27/39 (69.2%)** | **25/39** | 4 | 523,594 | 539,583 | 39 a5 |
+**Codex with GPT-5.6 Sol** reviewed preserved final artifacts and verifier traces.
+This was a post-hoc engineering review, not a blinded numeric score. These are
+abridged excerpts from actual benchmark submissions.
 
-The benchmark was completed in two phases to avoid spending tokens on
-unnecessary reruns. The second phase reran cells that had timed out previously
-and added three coverage tasks; twelve completed baseline cells were reused from
-the first phase. Both phases used the same task selection, model family, three
-repetitions, and run-order seed. The twelve reused cells had the earlier timeout
-contract, however, and a shared seed does not make hosted model trajectories
-deterministic. The 39-run view is therefore descriptive evidence, not a fully
-matched causal estimate.
+### 1. Preserve a valid distributed boundary
 
-The mean-token columns come from preserved raw records. "Attempted run" is the
-mean across all 39 attempts; "successful run" is the mean among attempts with
-official reward 1.
-
-Task-level inspection found that Causeloom's gains on the contemporaneously
-rerun slice came from two `extreme` systems tasks: cross-compiling Doom for MIPS
-and pipeline-parallel runtime work. That supports a strength on complex
-multi-step problems, but the sample is too small to claim a general large-scale
-repository advantage.
-
-### Code-quality review
-
-The preserved final-code review was performed by **Codex with GPT-5.6 Sol**. It
-inspected 15 pre-rc.3 Causeloom artifacts across five code-bearing tasks,
-combining verifier output with direct review of structure, maintainability, and
-failure behavior. It was an engineering review, not a blinded numeric score.
-
-One concrete example is the row-parallel tensor implementation. The no-skill
-attempt assumed every caller supplied the full input and always scattered it:
+The baseline rejected the already-local tensor shard used by the row-parallel
+caller:
 
 ```python
 if input.size(-1) != self.in_features:
     raise ValueError(...)
-local_input = _ScatterToTensorParallelRegion.apply(input)
+local_input = _ScatterLastDimension.apply(input, self.world_size, self.rank)
 ```
 
-The passing Causeloom implementation preserved the actual boundary: callers
-could provide either the full tensor or the already-local shard used by the
-grader.
+Causeloom accepted either valid boundary and only sliced the full form:
 
 ```python
-if input.shape[-1] == self.in_features:
-    input = input.narrow(-1, rank * shard_size, shard_size)
-elif input.shape[-1] != self.in_features_per_rank:
+if input.size(-1) == self.in_features_per_rank:
+    local_input = input
+elif input.size(-1) == self.in_features:
+    start = self.rank * self.in_features_per_rank
+    local_input = input.narrow(-1, start, self.in_features_per_rank)
+else:
     raise ValueError(...)
 ```
 
-That Causeloom artifact was the only implementation in the 12-attempt task to
-pass all world-size, bias, forward, and gradient checks. The same review found
-the opposite failure pattern on HTML sanitization: Causeloom built three
-446-493-line custom parsers, but all scored 0/3 because they still missed an
-attack case and changed legitimate HTML. In other words, added structure helped
-when it represented real distributed-state ownership, and hurt when it became
-an expanding substitute for a preservation-first design.
+Result: Causeloom passed all column/row, world-size, bias, forward, and gradient
+checks; the baseline failed the row-parallel contract.
 
-The review's bottom line was **strong peak decomposition and auditability, but
-uneven simplicity and closure**. The rc.3 policy added explicit stopping,
-preservation-first checks, compatibility evidence, and final-artifact closure in
-response. The rc.3 artifacts have not received a second blinded quality score,
-so this conclusion remains separate from the verifier results above.
+### 2. Match communication order to gradient ownership
 
-### Strengths and tradeoffs
+The baseline reversed the AFAB backward microbatch order:
 
-| Strengths | Tradeoffs |
+```python
+for microbatch_index in range(microbatch_count - 1, -1, -1):
+    ...
+```
+
+Causeloom kept the verified FIFO pairing between stage sends and receives:
+
+```python
+for microbatch_index in range(num_microbatches):
+    ...
+```
+
+Result: Causeloom passed the two-rank forward/backward comparison; the baseline
+produced a layer-gradient mismatch.
+
+### 3. Build for the runtime that actually executes the artifact
+
+The baseline produced an ELF, but its runtime never emitted the requested
+frame:
+
+```make
+CROSS ?= mips-linux-gnu-
+CC := $(CROSS)gcc
+LDFLAGS := -EL -m elf32ltsmip -T mips_vm.ld
+# ... my_stdlib.c
+```
+
+Causeloom aligned the target, linker, and small libc shim with the supplied VM:
+
+```make
+CC := clang
+CFLAGS := --target=mipsel-unknown-linux-gnu --sysroot=/usr/mips-linux-gnu ...
+$(LD) -m elf32ltsmip -static -T mips.ld -o $@ $(OBJECTS)
+# ... vm_libc.c
+```
+
+Result: `node vm.js` produced the frame and the verifier passed execution,
+existence, and image-similarity checks. This run later hit the agent time limit,
+which is why the success remains timeout-flagged.
+
+The useful pattern across the three examples is not “more code.” It is explicit
+ownership of interface shape, communication order, and the final runtime
+contract. The main review risk was the opposite: on source-preserving HTML
+sanitization, Causeloom overbuilt custom parsers that still failed preservation.
+
+## Strengths and tradeoffs
+
+| Strong fit | Tradeoffs |
 |---|---|
-| 27 official successes versus 20 for the no-skill baseline in the full 39-attempt view | About 25% more mean tokens per attempt and 36% more among successful runs |
-| 25 exception-free successes versus 19 | The same four timeout-flagged attempts |
-| Gains appeared on two difficult cross-build/distributed-runtime tasks | No measured advantage on the three new coverage tasks |
-| Review evidence of strong state ownership and auditable decomposition | Review evidence of overbuilding and speculative compatibility on some tasks |
-| Explicit root-cause, ownership, verification, simplification, and stopping discipline | The two-phase full view is descriptive rather than a fully matched causal estimate |
+| Distributed or stateful code with multiple owners | More inspection and verification can cost more tokens |
+| Cross-builds and multi-step runtime delivery | It can still overbuild when preservation should dominate |
+| Ambiguous boundaries where cheap compatibility is possible | Same number of timeout-flagged attempts in this benchmark |
+| Work that needs an auditable final artifact | Evidence is one model and one 13-task suite |
 
-The chart-ready data, generator, audit hashes, task selection, validity limits,
-and reproduction notes are under [`docs/benchmarks`](docs/benchmarks/) and
-[`evals`](evals/). The public repository compares only Causeloom with no extra
-skill. Other policies may be useful as private calibration standards, but their
-named results and policy copies are intentionally not published here.
+## How it works
+
+The policy asks the agent to:
+
+1. Translate the request into observable success checks.
+2. Trace the owning cause before changing code.
+3. Choose the smallest intervention that can be correct.
+4. Validate boundaries and compatibility in proportion to risk.
+5. Verify the final entrypoint—not an intermediate approximation.
+6. Remove unjustified machinery and stop when evidence is sufficient.
+
+Read the complete policy in [`SKILL.md`](SKILL.md) and its rationale in
+[`docs/DESIGN.md`](docs/DESIGN.md).
 
 ## Motivation
 
@@ -187,11 +212,11 @@ simple solutions:
 - [Karpathy Guidelines](https://github.com/multica-ai/andrej-karpathy-skills)
 - [Ponytail](https://github.com/DietrichGebert/ponytail)
 
-Causeloom builds on that motivation with explicit rules for consequence-based
-ambiguity, lifecycle ownership, preservation, authoritative boundary placement,
-risk-scaled verification, simplification, and verified closure.
+It extends that motivation with consequence-based ambiguity, lifecycle
+ownership, preservation, authoritative boundary placement, risk-scaled
+verification, simplification, and verified closure.
 
-## Develop and package
+## Develop
 
 ```bash
 make check
@@ -199,26 +224,11 @@ make package
 make package-repo
 ```
 
-On Windows without GNU Make, run the corresponding Python commands from the
-[`Makefile`](Makefile).
-
-The repository intentionally excludes `work/`, `results/`,
-`evals/private-conditions/`, local environments, logs, caches, and generated
-release archives. Those paths can contain large raw benchmark sessions,
-private calibration policies, or host-specific state and do not belong in
-source history.
-
-## Repository map
-
-```text
-SKILL.md                 canonical installable policy
-agents/openai.yaml       ChatGPT/Codex UI metadata
-docs/                    design, installation, release, and benchmark evidence
-evals/                   public baseline evaluation and reproducible tooling
-scripts/                 validation and deterministic packaging
-tests/                   repository and evaluation-tooling checks
-```
+The repository contains the canonical skill, deterministic packaging, public
+baseline evaluation tooling, and chart-ready evidence. Raw sessions, private
+calibration policies, caches, logs, and generated archives stay out of source
+history.
 
 ## License
 
-Causeloom is released under the [MIT License](LICENSE).
+[MIT](LICENSE)
