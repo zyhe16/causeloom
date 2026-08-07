@@ -124,27 +124,33 @@ Before model runs:
 6. pin the same task resources, timeouts, network policy, model, reasoning effort, and Codex version for every condition; and
 7. randomize the 78-run order with seed `329` while keeping three repetitions per task-condition pair.
 
-The completed rc3 benchmark used offline adaptation `a5`, which doubled every
-upstream `[agent].timeout_sec` while leaving verifier and environment-build
-timeouts unchanged. Its effective agent limits were 30 minutes for M02, M03,
-X02, X03, X04, X06, C02, and C03; 20 minutes for C01; and 60 minutes for M01,
-X01, X05, and X07. Results produced under a5 and a3 remain separate for causal
-or matched claims. A hybrid descriptive view may use the latest a5 cell where
-rerun and the historical a3 cell where skipped only when every source count and
-this comparability limit are shown explicitly.
-
-The GPT-5.6 Luna experiment uses a new offline adaptation, `a6`, that doubles
-the a5 limits again: four times each upstream `[agent].timeout_sec`. Its
+The completed public GPT-5.6 Luna benchmark uses offline adaptation `a6`: four
+times each upstream `[agent].timeout_sec`. Its
 effective agent limits are 60 minutes for M02, M03, X02, X03, X04, X06, C02,
 and C03; 40 minutes for C01; and 120 minutes for M01, X01, X05, and X07.
-Verifier and environment-build timeouts remain unchanged. This is a separate
-frozen execution contract. The primary comparison is Causeloom versus the
-no-skill baseline within the Luna a6 run; comparisons with Sol a5 are
-descriptive because both the model and timeout contract changed.
+Verifier and environment-build timeouts remain unchanged. The published result
+uses only the 78 matched Luna a6 trials; no historical cells are pooled into
+the comparison. All 78 trials finished without an agent timeout.
 
-`prepare_research_benchmark.py` projects the seeded matrix into five independent workers with 3/3/3/2/2 task queues. Each worker executes its condition/repetition trials sequentially in the relative order established by the global seed; the five workers run concurrently. The two 4 GB PyTorch tasks are assigned to different workers, and each added coverage task uses 2 GB. Every trial gets a fresh Harbor environment and Codex home. The runner refuses to start until `work/research-benchmark-dynamic/preflight/MODEL_FREE_READY.json` exists, preserves Harbor's resolved locks and raw Codex logs, and exports `/app` for later blinded code review.
+`prepare_research_benchmark.py` preserves the seeded run identities and global
+execution order in the lock. New locks use a work-conserving global scheduler:
+the seed order is the priority, while a later eligible run may fill an idle slot
+when the next run is blocked. The default frozen limits are two concurrent
+repetitions per task, 20 GB of aggregate declared task memory, and the runtime
+`--max-workers` process cap. Every trial still gets a fresh Harbor environment
+and Codex home. This avoids the long tail produced by one sequential queue per
+task without allowing unbounded same-task or memory-heavy concurrency.
 
-An explicitly authorized accelerated rerun may instead freeze thirteen one-task worker slots and select a lower runtime concurrency cap from the same lock. This preserves sequential execution within each task, matched run identities, and resume safety. Record the actual cap and any fallback attempts, and treat wall-clock comparisons with the five-worker protocol as non-comparable because host contention changed.
+Locks without a `scheduler` section retain the legacy sequential task-queue
+behavior. The completed Luna a6 lock was frozen before this change and used
+that legacy behavior. A new scheduling contract requires a new lock and
+model-free readiness marker. Record the actual cap and any
+fallback attempts, and treat wall-clock comparisons across scheduler contracts
+as non-comparable because host contention changed.
+
+The runner refuses to start until the lock's `MODEL_FREE_READY.json` exists,
+preserves Harbor's resolved locks and raw Codex logs, and exports `/app` for
+later code review.
 
 Preserve Harbor results, Codex event/session artifacts, container/grader logs, final patches, and final responses. A run blocked by infrastructure is invalid and rerun only under the preregistered retry policy; it is not a model failure.
 
@@ -158,10 +164,8 @@ The frozen upstream prompts, solutions, and graders are unchanged. Three task en
 - `make-doom-for-mips` preinstalls the official cross-compilation toolchain and replaces a now-dead upstream WAD URL with `/app/doom.wad` extracted from the pinned official `make-mips-interpreter` image (`sha256:082fc882...`, file SHA-256 `1d7d43be...`);
 - `kv-store-grpc` preinstalls the two exact pinned grpc packages required by the prompt so the agent can generate the interface and implement and launch the service without package-registry access.
 
-The adaptations contain no solution patch. The completed ten-task a3 suite
-passed all ten official oracles, all ten no-op trials failed, and all ten
-isolation probes passed. Before the rc3 model run, the expanded a5 suite passed
-all 13 official oracles, all 13 no-op trials failed, all 13 isolation probes
+The adaptations contain no solution patch. Before the Luna a6 model run, all
+13 official oracles passed, all 13 no-op trials failed, all 13 isolation probes
 passed, and the grader-randomness audit found no unseeded source. The public
 summary and audit hashes are recorded in `docs/benchmarks/`.
 

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="470" viewBox="0 0 960 470" role="img" aria-labelledby="title desc">
+<title id="title">Matched benchmark results by task category</title>
+<desc id="desc">Causeloom versus the no-skill baseline across integration and build, extreme systems, and targeted coverage tasks.</desc>
+<rect width="960" height="470" fill="#FFFFFF"/>
+<text x="48" y="48" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="26" font-weight="700" fill="#172033" text-anchor="start">The largest gain was on extreme systems</text>
+<text x="48" y="78" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="15" font-weight="400" fill="#667085" text-anchor="start">Official verifier pass rate within each task category</text>
+<line x1="250.0" y1="112" x2="250.0" y2="390" stroke="#D9E0EA"/>
+<text x="250.0" y="413" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400" fill="#667085" text-anchor="middle">0%</text>
+<line x1="344.0" y1="112" x2="344.0" y2="390" stroke="#D9E0EA"/>
+<text x="344.0" y="413" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400" fill="#667085" text-anchor="middle">20%</text>
+<line x1="438.0" y1="112" x2="438.0" y2="390" stroke="#D9E0EA"/>
+<text x="438.0" y="413" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400" fill="#667085" text-anchor="middle">40%</text>
+<line x1="532.0" y1="112" x2="532.0" y2="390" stroke="#D9E0EA"/>
+<text x="532.0" y="413" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400" fill="#667085" text-anchor="middle">60%</text>
+<line x1="626.0" y1="112" x2="626.0" y2="390" stroke="#D9E0EA"/>
+<text x="626.0" y="413" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400" fill="#667085" text-anchor="middle">80%</text>
+<line x1="720.0" y1="112" x2="720.0" y2="390" stroke="#D9E0EA"/>
+<text x="720.0" y="413" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="400" fill="#667085" text-anchor="middle">100%</text>
+<text x="232" y="148" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600" fill="#172033" text-anchor="end">Integration and build</text>
+<rect x="250" y="120" width="417.7777777777777" height="22" rx="3" fill="#7A8494"/>
+<text x="676.7777777777777" y="136" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" fill="#172033" text-anchor="start">Baseline 8/9 · 88.9%</text>
+<rect x="250" y="151" width="470.0" height="22" rx="3" fill="#2457D6"/>
+<text x="729.0" y="167" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" fill="#172033" text-anchor="start">Causeloom 9/9 · 100.0%</text>
+<text x="232" y="234" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600" fill="#172033" text-anchor="end">Extreme systems</text>
+<rect x="250" y="206" width="156.66666666666669" height="22" rx="3" fill="#7A8494"/>
+<text x="415.6666666666667" y="222" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" fill="#172033" text-anchor="start">Baseline 7/21 · 33.3%</text>
+<rect x="250" y="237" width="268.5714285714286" height="22" rx="3" fill="#2457D6"/>
+<text x="527.5714285714287" y="253" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" fill="#172033" text-anchor="start">Causeloom 12/21 · 57.1%</text>
+<text x="232" y="320" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="16" font-weight="600" fill="#172033" text-anchor="end">Targeted coverage</text>
+<rect x="250" y="292" width="313.33333333333337" height="22" rx="3" fill="#7A8494"/>
+<text x="572.3333333333334" y="308" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" fill="#172033" text-anchor="start">Baseline 6/9 · 66.7%</text>
+<rect x="250" y="323" width="365.55555555555554" height="22" rx="3" fill="#2457D6"/>
+<text x="624.5555555555555" y="339" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="600" fill="#172033" text-anchor="start">Causeloom 7/9 · 77.8%</text>
+<text x="48" y="456" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="400" fill="#667085" text-anchor="start">Categories are preregistered in evals/research-suite.csv; all use the same matched run contract.</text>
+</svg>

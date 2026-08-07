@@ -17,6 +17,16 @@ SPEC.loader.exec_module(MODULE)
 
 
 class PrepareResearchBenchmarkTest(unittest.TestCase):
+    def test_environment_memory_is_normalized_to_gigabytes(self):
+        self.assertEqual(
+            MODULE.environment_memory_gb('[environment]\nmemory = "4G"\n'), 4.0
+        )
+        self.assertEqual(
+            MODULE.environment_memory_gb('[environment]\nmemory = "2048M"\n'), 2.0
+        )
+        with self.assertRaisesRegex(ValueError, "Unsupported task memory"):
+            MODULE.environment_memory_gb('[environment]\nmemory = "unlimited"\n')
+
     def test_tree_digest_is_stable_and_path_sensitive(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

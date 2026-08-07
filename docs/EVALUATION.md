@@ -40,11 +40,10 @@ The preregistered selection and external-harness requirements are in
 `evals/RESEARCH_SUITE.md`. Run its oracle, dummy-agent, artifact-isolation, and
 Docker preflights before any model run.
 
-The completed GPT-5.6 Sol High result, chart-ready data, audit hashes, and
-comparability limits are published in [`benchmarks/`](benchmarks/). Treat the
-fully contemporaneous a5 subset as the strongest comparison. The combined
-thirteen-task view is descriptive because some baseline cells come from the
-historical a3 execution contract.
+The completed GPT-5.6 Luna Max result, chart-ready data, and audit hashes are
+published in [`benchmarks/`](benchmarks/). It is a fully matched 78-run
+comparison under the a6 execution contract; no historical cells are pooled
+into the public result.
 
 ## Freeze the environment
 

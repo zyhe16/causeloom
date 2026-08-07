@@ -12,7 +12,14 @@ import subprocess
 import threading
 import time
 import tomllib
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from collections.abc import Callable
+from concurrent.futures import (
+    FIRST_COMPLETED,
+    Future,
+    ThreadPoolExecutor,
+    as_completed,
+    wait,
+)
 from pathlib import Path
 
 
@@ -162,6 +169,119 @@ def validate_worker_plan(
     return len(all_runs)
 
 
+def scheduler_config(
+    lock_data: dict[str, object], tasks: dict[str, dict[str, object]]
+) -> dict[str, object] | None:
+    raw = lock_data.get("scheduler")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict) or raw.get("mode") != "global-work-conserving":
+        raise ValueError("Lock has an unsupported scheduler contract")
+    max_per_task = raw.get("max_parallel_runs_per_task")
+    memory_budget = raw.get("memory_budget_gb")
+    if not isinstance(max_per_task, int) or max_per_task < 1:
+        raise ValueError("Scheduler max_parallel_runs_per_task must be positive")
+    if not isinstance(memory_budget, (int, float)) or memory_budget <= 0:
+        raise ValueError("Scheduler memory_budget_gb must be positive")
+    task_memory: dict[str, float] = {}
+    for task_id, task in tasks.items():
+        value = task.get("environment_memory_gb")
+        if not isinstance(value, (int, float)) or value <= 0:
+            raise ValueError(f"Task {task_id} is missing environment_memory_gb")
+        if value > memory_budget:
+            raise ValueError(f"Task {task_id} exceeds the scheduler memory budget")
+        task_memory[task_id] = float(value)
+    return {
+        "mode": "global-work-conserving",
+        "max_parallel_runs_per_task": max_per_task,
+        "memory_budget_gb": float(memory_budget),
+        "task_memory_gb": task_memory,
+    }
+
+
+def globally_ordered_runs(
+    workers: dict[str, list[dict[str, str]]],
+) -> list[dict[str, str]]:
+    runs = [run for worker_runs in workers.values() for run in worker_runs]
+    try:
+        ordered = sorted(runs, key=lambda run: int(run["execution_order"]))
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("Global scheduler requires numeric execution_order values") from error
+    orders = [int(run["execution_order"]) for run in ordered]
+    if len(orders) != len(set(orders)):
+        raise ValueError("Global scheduler requires unique execution_order values")
+    return ordered
+
+
+def next_eligible_run_index(
+    pending: list[dict[str, str]],
+    active_by_task: dict[str, int],
+    active_memory_gb: float,
+    task_memory_gb: dict[str, float],
+    max_parallel_runs_per_task: int,
+    memory_budget_gb: float,
+) -> int | None:
+    for index, run in enumerate(pending):
+        task_id = run["task_id"]
+        if active_by_task.get(task_id, 0) >= max_parallel_runs_per_task:
+            continue
+        if active_memory_gb + task_memory_gb[task_id] > memory_budget_gb + 1e-9:
+            continue
+        return index
+    return None
+
+
+def run_work_conserving(
+    runs: list[dict[str, str]],
+    max_workers: int,
+    task_memory_gb: dict[str, float],
+    max_parallel_runs_per_task: int,
+    memory_budget_gb: float,
+    stop_event: threading.Event,
+    run_one: Callable[[dict[str, str]], None],
+) -> None:
+    pending = list(runs)
+    active: dict[Future[None], tuple[str, float]] = {}
+    active_by_task: dict[str, int] = {}
+    active_memory_gb = 0.0
+    with ThreadPoolExecutor(
+        max_workers=max_workers, thread_name_prefix="tbench"
+    ) as executor:
+        while (pending and not stop_event.is_set()) or active:
+            while (
+                pending
+                and not stop_event.is_set()
+                and len(active) < max_workers
+            ):
+                index = next_eligible_run_index(
+                    pending,
+                    active_by_task,
+                    active_memory_gb,
+                    task_memory_gb,
+                    max_parallel_runs_per_task,
+                    memory_budget_gb,
+                )
+                if index is None:
+                    break
+                run = pending.pop(index)
+                task_id = run["task_id"]
+                memory_gb = task_memory_gb[task_id]
+                future = executor.submit(run_one, run)
+                active[future] = (task_id, memory_gb)
+                active_by_task[task_id] = active_by_task.get(task_id, 0) + 1
+                active_memory_gb += memory_gb
+            if not active:
+                if pending and not stop_event.is_set():
+                    raise RuntimeError("Scheduler cannot fit any pending run")
+                break
+            finished, _ = wait(active, return_when=FIRST_COMPLETED)
+            for future in finished:
+                task_id, memory_gb = active.pop(future)
+                active_by_task[task_id] -= 1
+                active_memory_gb -= memory_gb
+                future.result()
+
+
 def harbor_command(
     harbor: Path,
     task_path: Path,
@@ -307,6 +427,8 @@ def main() -> None:
         planned_runs = validate_worker_plan(
             workers, worker_tasks, tasks, expected_runs
         )
+        scheduler = scheduler_config(lock_data, tasks)
+        ordered_runs = globally_ordered_runs(workers) if scheduler else []
         validate_condition_hashes(lock_data)
     except ValueError as error:
         raise SystemExit(str(error)) from error
@@ -334,9 +456,11 @@ def main() -> None:
     if not offline_compose.is_file():
         raise SystemExit(f"Offline compose overlay not found: {offline_compose}")
     if not args.execute:
+        scheduling = scheduler["mode"] if scheduler else "legacy-task-queues"
         print(
             f"Validated {len(workers)} worker slots, concurrency {max_workers}, "
-            f"and {planned_runs} runs. Pass --execute after all preflights pass."
+            f"{planned_runs} runs, and {scheduling} scheduling. "
+            "Pass --execute after all preflights pass."
         )
         return
 
@@ -384,6 +508,7 @@ def main() -> None:
         "codex_version": args.codex_version,
         "worker_count": max_workers,
         "worker_slots": len(workers),
+        "scheduler": scheduler or {"mode": "legacy-task-queues"},
         "planned_runs": planned_runs,
         "state": "running",
         "launcher_history": launcher_history,
@@ -398,112 +523,133 @@ def main() -> None:
             runs[run_id] = run_status
             write_status(status_path, status)
 
+    def run_one(run: dict[str, str], worker_id: str) -> None:
+        if stop_event.is_set():
+            return
+        suite_id = run["task_id"]
+        task_path = Path(str(tasks[suite_id]["adapted_path"]))
+        run_id = run["run_id"]
+        if args.resume and completed_run(args.jobs_root, run_id):
+            with status_lock:
+                recorded_runs = status["runs"]
+                assert isinstance(recorded_runs, dict)
+                previous_state = recorded_runs.get(run_id)
+            update_run(
+                run_id,
+                {
+                    "state": "already_completed",
+                    "previous_state": previous_state,
+                },
+            )
+            return
+        archived_attempt: str | None = None
+        existing_run = args.jobs_root / run_id
+        if args.resume and existing_run.is_dir():
+            reason = (
+                "retryable_infrastructure_exception"
+                if retryable_infrastructure_run(args.jobs_root, run_id)
+                else "interrupted_incomplete_attempt"
+            )
+            archived_attempt = str(
+                archive_existing_attempt(
+                    args.jobs_root, attempt_archive_root, run_id, reason
+                )
+            )
+        command = harbor_command(
+            args.harbor,
+            task_path,
+            args.jobs_root,
+            run,
+            args.codex_version,
+            args.codex_binary.resolve(),
+            args.codex_binary_sha256,
+            args.codex_config.resolve(),
+            offline_compose.resolve(),
+            args.common_instruction,
+            args.auth_json.resolve(),
+            args.base_url,
+        )
+        log_dir = args.lock.parent / "launcher-logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / f"{run_id}.log"
+        update_run(
+            run_id,
+            {
+                "state": "running",
+                "worker": worker_id,
+                "started_unix": time.time(),
+                "log": str(log_path),
+                "archived_attempt": archived_attempt,
+            },
+        )
+        with log_path.open("w", encoding="utf-8") as log:
+            child_env = os.environ.copy()
+            repo_root = str(Path.cwd().resolve())
+            existing_pythonpath = child_env.get("PYTHONPATH")
+            child_env["PYTHONPATH"] = (
+                repo_root
+                if not existing_pythonpath
+                else repo_root + os.pathsep + existing_pythonpath
+            )
+            child_env["PYTHONUTF8"] = "1"
+            child_env["PYTHONIOENCODING"] = "utf-8"
+            result = subprocess.run(
+                command,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                text=True,
+                env=child_env,
+                check=False,
+            )
+        nested_infrastructure_error = retryable_infrastructure_run(
+            args.jobs_root, run_id
+        )
+        infrastructure_error = result.returncode != 0 or nested_infrastructure_error
+        update_run(
+            run_id,
+            {
+                "state": (
+                    "infrastructure_error" if infrastructure_error else "completed"
+                ),
+                "worker": worker_id,
+                "finished_unix": time.time(),
+                "return_code": result.returncode,
+                "nested_infrastructure_error": nested_infrastructure_error,
+                "log": str(log_path),
+            },
+        )
+        if infrastructure_error and args.stop_on_infrastructure_error:
+            stop_event.set()
+
     def run_worker(worker_id: str, runs: list[dict[str, str]]) -> None:
         for run in runs:
             if stop_event.is_set():
                 return
-            suite_id = run["task_id"]
-            task_path = Path(str(tasks[suite_id]["adapted_path"]))
-            run_id = run["run_id"]
-            if args.resume and completed_run(args.jobs_root, run_id):
-                with status_lock:
-                    recorded_runs = status["runs"]
-                    assert isinstance(recorded_runs, dict)
-                    previous_state = recorded_runs.get(run_id)
-                update_run(
-                    run_id,
-                    {
-                        "state": "already_completed",
-                        "previous_state": previous_state,
-                    },
-                )
-                continue
-            archived_attempt: str | None = None
-            existing_run = args.jobs_root / run_id
-            if args.resume and existing_run.is_dir():
-                reason = (
-                    "retryable_infrastructure_exception"
-                    if retryable_infrastructure_run(args.jobs_root, run_id)
-                    else "interrupted_incomplete_attempt"
-                )
-                archived_attempt = str(
-                    archive_existing_attempt(
-                        args.jobs_root, attempt_archive_root, run_id, reason
-                    )
-                )
-            command = harbor_command(
-                args.harbor,
-                task_path,
-                args.jobs_root,
-                run,
-                args.codex_version,
-                args.codex_binary.resolve(),
-                args.codex_binary_sha256,
-                args.codex_config.resolve(),
-                offline_compose.resolve(),
-                args.common_instruction,
-                args.auth_json.resolve(),
-                args.base_url,
-            )
-            log_dir = args.lock.parent / "launcher-logs"
-            log_dir.mkdir(parents=True, exist_ok=True)
-            log_path = log_dir / f"{run_id}.log"
-            update_run(
-                run_id,
-                {
-                    "state": "running",
-                    "worker": worker_id,
-                    "started_unix": time.time(),
-                    "log": str(log_path),
-                    "archived_attempt": archived_attempt,
-                },
-            )
-            with log_path.open("w", encoding="utf-8") as log:
-                child_env = os.environ.copy()
-                repo_root = str(Path.cwd().resolve())
-                existing_pythonpath = child_env.get("PYTHONPATH")
-                child_env["PYTHONPATH"] = (
-                    repo_root
-                    if not existing_pythonpath
-                    else repo_root + os.pathsep + existing_pythonpath
-                )
-                child_env["PYTHONUTF8"] = "1"
-                child_env["PYTHONIOENCODING"] = "utf-8"
-                result = subprocess.run(
-                    command,
-                    stdout=log,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    env=child_env,
-                    check=False,
-                )
-            nested_infrastructure_error = retryable_infrastructure_run(
-                args.jobs_root, run_id
-            )
-            infrastructure_error = result.returncode != 0 or nested_infrastructure_error
-            update_run(
-                run_id,
-                {
-                    "state": (
-                        "infrastructure_error" if infrastructure_error else "completed"
-                    ),
-                    "worker": worker_id,
-                    "finished_unix": time.time(),
-                    "return_code": result.returncode,
-                    "nested_infrastructure_error": nested_infrastructure_error,
-                    "log": str(log_path),
-                },
-            )
-            if infrastructure_error and args.stop_on_infrastructure_error:
-                stop_event.set()
+            run_one(run, worker_id)
 
-    with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="tbench") as executor:
-        futures = {
-            executor.submit(run_worker, worker_id, runs): worker_id
-            for worker_id, runs in workers.items()
-        }
-        for future in as_completed(futures):
-            future.result()
+    if scheduler:
+        def run_scheduled(run: dict[str, str]) -> None:
+            run_one(run, threading.current_thread().name)
+
+        run_work_conserving(
+            ordered_runs,
+            max_workers,
+            scheduler["task_memory_gb"],
+            int(scheduler["max_parallel_runs_per_task"]),
+            float(scheduler["memory_budget_gb"]),
+            stop_event,
+            run_scheduled,
+        )
+    else:
+        with ThreadPoolExecutor(
+            max_workers=max_workers, thread_name_prefix="tbench"
+        ) as executor:
+            futures = {
+                executor.submit(run_worker, worker_id, runs): worker_id
+                for worker_id, runs in workers.items()
+            }
+            for future in as_completed(futures):
+                future.result()
 
     with status_lock:
         status["finished_unix"] = time.time()

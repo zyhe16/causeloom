@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import hashlib
+import threading
 import tempfile
 import unittest
 from pathlib import Path
@@ -27,6 +28,106 @@ CONFIG = load(
 
 
 class RunResearchBenchmarkTest(unittest.TestCase):
+    def test_legacy_lock_keeps_task_queue_scheduler(self):
+        self.assertIsNone(RUNNER.scheduler_config({}, {"M01": {}}))
+
+    def test_global_scheduler_validates_resources_and_seed_order(self):
+        tasks = {
+            "A": {"environment_memory_gb": 2.0},
+            "B": {"environment_memory_gb": 4.0},
+        }
+        config = RUNNER.scheduler_config(
+            {
+                "scheduler": {
+                    "mode": "global-work-conserving",
+                    "max_parallel_runs_per_task": 2,
+                    "memory_budget_gb": 20.0,
+                }
+            },
+            tasks,
+        )
+        self.assertEqual(config["task_memory_gb"], {"A": 2.0, "B": 4.0})
+        workers = {
+            "worker-01": [
+                {"run_id": "A-r2", "task_id": "A", "execution_order": "2"}
+            ],
+            "worker-02": [
+                {"run_id": "B-r1", "task_id": "B", "execution_order": "1"}
+            ],
+        }
+        self.assertEqual(
+            [run["run_id"] for run in RUNNER.globally_ordered_runs(workers)],
+            ["B-r1", "A-r2"],
+        )
+
+    def test_work_conserving_scheduler_fills_tail_slots(self):
+        runs = [
+            {
+                "run_id": f"{task}-condition-r{repetition}",
+                "task_id": task,
+                "execution_order": str(order),
+            }
+            for order, (task, repetition) in enumerate(
+                (
+                    (task, repetition)
+                    for task in ("A", "B", "C")
+                    for repetition in (1, 2)
+                ),
+                start=1,
+            )
+        ]
+        state_lock = threading.Lock()
+        all_started = threading.Barrier(6)
+        active = 0
+        maximum = 0
+
+        def run_one(_run):
+            nonlocal active, maximum
+            with state_lock:
+                active += 1
+                maximum = max(maximum, active)
+            all_started.wait(timeout=2)
+            with state_lock:
+                active -= 1
+
+        RUNNER.run_work_conserving(
+            runs,
+            max_workers=8,
+            task_memory_gb={"A": 2.0, "B": 2.0, "C": 2.0},
+            max_parallel_runs_per_task=2,
+            memory_budget_gb=20.0,
+            stop_event=threading.Event(),
+            run_one=run_one,
+        )
+        self.assertEqual(maximum, 6)
+
+    def test_scheduler_respects_memory_and_per_task_caps(self):
+        pending = [
+            {"run_id": "A-2", "task_id": "A"},
+            {"run_id": "B-2", "task_id": "B"},
+        ]
+        self.assertEqual(
+            RUNNER.next_eligible_run_index(
+                pending,
+                active_by_task={"A": 1, "B": 1},
+                active_memory_gb=8.0,
+                task_memory_gb={"A": 4.0, "B": 4.0},
+                max_parallel_runs_per_task=2,
+                memory_budget_gb=12.0,
+            ),
+            0,
+        )
+        self.assertIsNone(
+            RUNNER.next_eligible_run_index(
+                pending,
+                active_by_task={"A": 1, "B": 1},
+                active_memory_gb=8.0,
+                task_memory_gb={"A": 4.0, "B": 4.0},
+                max_parallel_runs_per_task=1,
+                memory_budget_gb=20.0,
+            )
+        )
+
     def test_condition_hashes_must_match_locked_policies(self):
         original = RUNNER.CONDITION_PATHS
         try:

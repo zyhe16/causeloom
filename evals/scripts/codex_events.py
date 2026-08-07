@@ -31,7 +31,12 @@ def read_jsonl(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
     errors: list[str] = []
     if not path.is_file():
         return events, [f"missing JSONL file: {path}"]
-    for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+    # JSONL records are delimited by LF. ``str.splitlines()`` also treats
+    # Unicode separators embedded inside otherwise valid JSON strings as
+    # record boundaries, which corrupts preserved tool output.
+    for number, line in enumerate(
+        path.read_text(encoding="utf-8", errors="replace").split("\n"), 1
+    ):
         if not line.strip():
             continue
         try:

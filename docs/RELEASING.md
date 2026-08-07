@@ -35,6 +35,6 @@ Use this checklist for a tagged public release.
    - the install-only skill ZIP;
    - the full source ZIP; and
    - a SHA-256 checksum file.
-9. Describe benchmark evidence conservatively. Distinguish contemporaneous a5
-   cells from historical a3 context and never infer blinded quality from reward,
-   tokens, elapsed time, or code size.
+9. Describe benchmark evidence conservatively. Publish the matched Luna a6
+   result without pooling historical cells, and never infer blinded quality
+   from reward, tokens, elapsed time, or code size.

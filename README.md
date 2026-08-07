@@ -12,8 +12,9 @@ Causeloom is a set of instructions for coding agents. It helps an agent
 understand what you asked for, fix the real cause, test the result people will
 actually use, and avoid unnecessary code.
 
-**In a 39-attempt benchmark, Causeloom completed 27 attempts versus 20 for the
-same agent without the skill.**
+In a matched 78-run [benchmark](#results), Causeloom completed 28 of 39 attempts
+versus 21 of 39 for the same agent without the skill, representing a **33.3%
+relative improvement**.
 
 ```text
 Understand -> Bound -> Change -> Verify -> Simplify -> Stop
@@ -34,7 +35,7 @@ properly tested.
 | Stops when the code builds | Tests the result people will actually use |
 | Leaves temporary or unused code | Cleans up before finishing |
 
-Causeloom does not mean “write the fewest lines.” The solution must first be
+Causeloom does not mean "write the fewest lines." The solution must first be
 correct and safe. Then it should be made as simple as possible.
 
 ## Install
@@ -59,6 +60,8 @@ Install Causeloom from https://github.com/zyhe16/causeloom using
 the installed skill is named `causeloom`, validate its SKILL.md, and do not
 modify unrelated files.
 ```
+> [!WARNING]
+> Non-deterministic installation method is not recommended.
 
 Invoke the installed skill with `$causeloom`; in ChatGPT desktop, type `@` and
 select **Causeloom**. More details are in
@@ -68,59 +71,71 @@ select **Causeloom**. More details are in
 
 All 13 benchmark problems come from
 [Terminal-Bench 2.0](https://www.tbench.ai/benchmarks/terminal-bench-2), with
-three attempts per problem for both Causeloom and the baseline.
+three attempts per problem for both Causeloom and the baseline. This was one
+fully matched run: the same model, tasks, seed, time limits, tools, and isolated
+environment for both conditions.
 
 ![Official reward across all 39 attempts](docs/assets/benchmark-full.svg)
 
 | Setup | Passed runs | Passes without exceptions | Timeouts | Average tokens per run |
 |---|---:|---:|---:|---:|
-| No-skill baseline | 20/39 (51.3%) | 19/39 | 4 | 420,488 |
-| **Causeloom** | **27/39 (69.2%)** | **25/39** | 4 | 523,594 |
+| No-skill baseline | 21/39 (53.8%) | 21/39 | 0 | 2,590,533 |
+| **Causeloom** | **28/39 (71.8%)** | **28/39** | 0 | **2,491,074** |
 
 > [!IMPORTANT]
-> We split the benchmark into two batches to avoid spending tokens on runs that
-> had already finished. For every earlier baseline problem where at least one of
-> its three runs reached the shorter time limit, we reran all three runs with the
-> longer limit. We reused only 12 earlier baseline runs whose three-run groups
-> finished within the shorter limit. Those 12 were not selected by score: 8
-> passed the automated tests and 4 failed. Reuse depended only on timeout status.
-> The combined result is **descriptive evidence, not a fully matched causal estimate**.
-> See [Method, briefly](#method-briefly).
+> The official verifier is an automated functional test, not a blinded
+> code-quality score. Terminal-Bench 2.0 is also public and may appear in model
+> training data.
 
-That is a **17.9 percentage-point** increase in the raw pass rate and six more
-passes without exceptions. Causeloom used about **24.5% more tokens per run**.
-This is consistent with the extra work the skill asks for: reading the relevant
-code, checking assumptions, testing the program people will run, and cleaning
-up before finishing. Token use is a cost, not a quality score, and this
-benchmark cannot tell us exactly which step caused the increase.
+That is a **17.9 percentage-point increase** and **7 additional completed
+runs**. Causeloom also used **3.8% fewer normalized tokens in total**. Token use
+varied sharply by problem—especially on the extreme tasks—so treat it as a
+cost diagnostic, not a quality score.
 
-### Where the difference appeared
+### Where Causeloom was strongest
 
-![Tasks with official Causeloom successes and zero baseline successes](docs/assets/benchmark-causeloom-only-wins.svg)
+![Matched results by task category](docs/assets/benchmark-luna-by-category.svg)
 
-On these four harder technical problems, Causeloom produced **6 passes in 12
-runs; the baseline produced 0**.
+The largest difference appeared on the seven extreme systems problems:
+**12/21 passes with Causeloom versus 7/21 without it**. These tasks cover
+recovery, distributed tensor operations, emulation, cross-building,
+performance scheduling, and adversarial HTML handling. Causeloom did not solve
+everything: both conditions remained 0/3 on the Doom cross-build and HTML
+sanitizer tasks.
 
-> [!WARNING]
-> One Doom run passed every automated check but also reached the time limit. It
-> counts as a pass, but not as a pass without exceptions.
+### Problems the baseline never completed
+
+![Tasks with official Causeloom successes and zero baseline successes](docs/assets/benchmark-luna-only-wins.svg)
+
+On WAL recovery and the live gRPC service, Causeloom produced **4 passes in 6
+runs; the baseline produced 0**. Across all 13 task groups, Causeloom improved
+five, tied eight, and was worse on none.
 
 ### Method, briefly
 
-- GPT-5.6 Sol, high reasoning, Codex CLI 0.146.0
-- Terminal-Bench 2.0, 13 problems, 3 runs each, isolated Harbor containers
+- GPT-5.6 Luna, max reasoning, Codex CLI 0.146.0
+- Terminal-Bench 2.0, 13 problems × 2 conditions × 3 repetitions = 78 runs
 - 3 medium integration/build tasks, 7 extreme systems workflows, 3 targeted
   coverage tasks
-- No internet access during tasks; automated test results decide whether a run
-  passes
+- Four times the upstream agent time limits; no run reached its limit
+- Fresh isolated Harbor container and Codex home for every attempt
+- No general internet access during tasks; official automated tests decide
+  whether a run passes
+- 78/78 raw sessions, final code exports, verifier results, and token records
+  preserved; the closeout audit found zero violations or warnings
 
-The second batch added three problems and doubled the agent time limits. For
-each earlier baseline problem affected by a timeout, all three runs were
-repeated under the longer limit. Both batches used the same model family,
-number of runs per problem, and ordering seed. However, a shared seed does not
-make hosted model trajectories deterministic. Technical details, file hashes,
-and instructions for repeating the benchmark are in
-[`docs/benchmarks`](docs/benchmarks/) and [`evals`](evals/).
+> [!NOTE]
+> We deliberately set the agent time limits to four times the upstream values.
+> A short timeout mixes up two questions: whether a model can solve the problem
+> and whether it can solve it quickly. This run focuses on completion ability,
+> while tokens and elapsed time remain visible as cost diagnostics. All 78 runs
+> finished within the longer limits, so neither condition's pass rate was
+> reduced by timeout censoring.
+
+A shared seed controls ordering but does not make hosted model trajectories
+deterministic, so every task-condition cell has three repetitions. Technical
+details, file hashes, chart-ready data, and instructions for repeating the run
+are in [`docs/benchmarks`](docs/benchmarks/) and [`evals`](evals/).
 
 ## Code-quality review
 
@@ -129,95 +144,149 @@ and instructions for repeating the benchmark are in
 > the code a numeric score. The automated benchmark results above remain the
 > main score.
 
-**Codex with GPT-5.6 Sol** reviewed the saved final code and automated test
-results. The examples below are shortened excerpts from real benchmark
-submissions.
+Codex reviewed the saved final code and official verifier output. These are
+shortened excerpts from the new matched Luna run. The tensor examples compare
+`X04-baseline-r1` with `X04-causeloom-r1`; the stdout example compares
+`X05-baseline-r2` with `X05-causeloom-r2`. The final two compare the matched
+C01 repetition 1 and X01 repetition 3 runs.
 
 ### 1. Accept both valid input shapes
 
-The baseline accepted only the full tensor. The test gave it the smaller piece
-already assigned to that worker, so it rejected a valid input:
+The baseline always sent the input directly into a rank-local weight:
 
 ```python
-if input.size(-1) != self.in_features:
-    raise ValueError(...)
-local_input = _ScatterLastDimension.apply(input, self.world_size, self.rank)
+output_parallel = F.linear(input, self.weight, None)
 ```
 
-Causeloom accepted both valid input shapes. It split the tensor only when it
-received the full one:
+Causeloom handled either a full tensor or the smaller partition already owned
+by the rank:
 
 ```python
-if input.size(-1) == self.in_features_per_rank:
-    local_input = input
-elif input.size(-1) == self.in_features:
-    start = self.rank * self.in_features_per_rank
-    local_input = input.narrow(-1, start, self.in_features_per_rank)
-else:
+if input.size(-1) == self.in_features and self.world_size > 1:
+    input = _SplitLastDim.apply(input, self.input_partition_sizes, self.rank)
+elif input.size(-1) != local_input_size:
     raise ValueError(...)
 ```
 
-Result: Causeloom passed every tensor-parallel test, including output and
-gradient checks. The baseline failed the row-parallel test.
+Result: this Causeloom run passed all 13 tensor-parallel checks; the matched
+baseline run passed 5.
 
-### 2. Keep messages and gradients in the right order
+### 2. Put each distributed operation in the right direction
 
-The baseline processed the backward steps in reverse order:
-
-```python
-for microbatch_index in range(microbatch_count - 1, -1, -1):
-    ...
-```
-
-Causeloom kept them in the order expected by the messages sent between workers:
+The baseline all-reduced the row-parallel gradient again during backward,
+which multiplied a gradient that should stay rank-local:
 
 ```python
-for microbatch_index in range(num_microbatches):
-    ...
+grad_input = grad_output.contiguous().clone()
+torch.distributed.all_reduce(grad_input)
+return grad_input
 ```
 
-Result: Causeloom passed the two-worker comparison. The baseline produced the
-wrong gradient for one layer.
+Causeloom reduced the partial outputs in the forward pass and returned the
+local gradient unchanged in backward:
 
-### 3. Test the program people will actually run
-
-The baseline built a program file, but running it never produced the requested
-image:
-
-```make
-CROSS ?= mips-linux-gnu-
-CC := $(CROSS)gcc
-LDFLAGS := -EL -m elf32ltsmip -T mips_vm.ld
-# ... my_stdlib.c
+```python
+output = input.clone()
+dist.all_reduce(output, op=dist.ReduceOp.SUM)
+# backward
+return grad_output, None
 ```
 
-Causeloom used compiler and linker settings that matched the supplied virtual
-machine:
+Result: output and gradient checks passed at world sizes 1, 2, and 4.
 
-```make
-CC := clang
-CFLAGS := --target=mipsel-unknown-linux-gnu --sysroot=/usr/mips-linux-gnu ...
-$(LD) -m elf32ltsmip -static -T mips.ld -o $@ $(OBJECTS)
-# ... vm_libc.c
+### 3. Preserve output on the real program path
+
+The baseline buffered guest stdout and only flushed it later:
+
+```javascript
+this.stdoutParts.push(Buffer.from(source));
+if (this.stdoutLength >= 16 * 1024) this.flushOutput();
 ```
 
-Result: `node vm.js` produced the image and passed all three checks: the program
-ran, the image existed, and it matched the reference. This is the timeout-marked
-run described above.
+Causeloom wrote stdout immediately:
 
-The lesson from these examples is not “write more code.” It is: accept the
-right inputs, keep steps in the right order, and test the finished program. The
-review also found a weakness. On an HTML cleaning task, Causeloom built large
-custom parsers that still changed safe HTML and missed a harmful case.
+```javascript
+const stream = fd === 1 ? process.stdout : process.stderr;
+stream.write(bytes);
+return count;
+```
+
+Result: the Causeloom run passed execution, image creation, and image-similarity
+checks. The matched baseline produced the correct image but lost the required
+stdout before the verifier stopped the process.
+
+### 4. Remove unused configuration and CLI surface
+
+Both C01 runs passed, but the baseline added a configuration reader and two CLI
+options even though the program never used the configuration:
+
+```python
+self.config_path = Path(config_path)
+self.config = self._read_config()
+parser.add_argument(
+    "--config",
+    type=Path,
+    default=DEFAULT_CONFIG_PATH,
+)
+```
+
+Causeloom kept the required path explicit and split the work into two small,
+testable functions:
+
+```python
+def main() -> None:
+    data = load_temperature_data(DEFAULT_DATA_PATH)
+    print_station_mean_temperatures(data)
+```
+
+Result: both passed both official checks, while the Causeloom implementation
+was 1,291 bytes versus 3,232 bytes and owned no unused configuration contract.
+
+### 5. Use the simplest batching rule that meets the contract
+
+Both X01 runs passed all six checks, including the performance thresholds. The
+baseline built a weighted interval knapsack to decide which batches to merge:
+
+```python
+states: list[dict[int, tuple[float, list[int]]]] = [
+    {} for _ in range(len(batches) + 2)
+]
+states[0][0] = (0.0, [])
+```
+
+Causeloom grouped requests by a shared shape and used one bounded generation
+window:
+
+```python
+if (
+    current
+    and current_min_gen is not None
+    and request["gen_len"] - current_min_gen > generation_window
+):
+    batch_number += 1
+    plan.extend(
+        _batch_records(current, f"b-{batch_number:04d}", seq_align)
+    )
+    current = []
+```
+
+Result: both satisfied schema, feasibility, coverage, and performance. The
+Causeloom packer was 4,516 bytes versus 8,300 bytes, with fewer moving parts to
+maintain.
+
+The lesson is not "write more code." It is: honor the real input contract,
+place distributed work on the correct path, and verify observable behavior.
+The review also found clear limits: neither condition solved the Doom
+cross-build or adversarial HTML sanitizer reliably.
 
 ## Strengths and tradeoffs
 
 | Works well for | Limits |
 |---|---|
-| Code where several parts share data or state | Extra reading and testing can use more tokens |
-| Builds that involve several tools or steps | It can still build too much for some tasks |
-| Inputs that can arrive in more than one valid form | It had the same number of timed-out runs in this benchmark |
-| Work that must be easy to inspect and review | The evidence comes from one model and 13 problems |
+| Complex systems work with several interacting parts | It can still build too much or choose the wrong approach |
+| Builds, recovery, distributed code, and emulation | It did not improve the two hardest failed task groups |
+| Inputs that can arrive in more than one valid form | Token use varies widely by task |
+| Work that needs end-to-end verification | The evidence comes from one model and 13 public problems |
 
 ## How it works
 

@@ -1,57 +1,73 @@
 # Benchmark evidence
 
-This directory contains the public, chart-ready summary of Causeloom's frozen
-Terminal-Bench 2.0 evaluation. Public comparisons are intentionally limited to
-Causeloom and the same agent receiving no additional skill.
+This directory contains the public, chart-ready summary of Causeloom's matched
+Terminal-Bench 2.0 evaluation. Public comparisons are limited to Causeloom and
+the same agent receiving no additional skill.
 
-## Result view
+## Published result
 
-The public chart covers thirteen tasks with three repetitions: 39 attempts per
-condition. The evaluation was completed in two phases to avoid spending tokens
-on unnecessary reruns. Causeloom uses 39 a5 trials; the no-skill baseline uses
-27 a5 trials and 12 completed a3 trials.
+The benchmark uses thirteen tasks, two conditions, and three repetitions: 39
+attempts per condition and 78 total. Every run used GPT-5.6 Luna at max
+reasoning, Codex CLI 0.146.0, the same seed and a6 timeout contract, a fresh
+Harbor container and Codex home, and no general internet access during the
+agent phase.
 
-The phases share the task selection, model family, repetitions, and run-order
-seed. The reused a3 cells have an earlier timeout contract, and a shared seed
-does not make a hosted model deterministic. Treat the combined chart as
-descriptive evidence rather than a fully matched causal estimate.
+The a6 contract deliberately gives each agent four times the upstream time
+limit. A shorter limit would confound task-solving ability with speed by
+censoring agents before they can finish. This benchmark therefore measures
+completion under a generous fixed budget and reports elapsed time separately.
+All 78 runs finished within that budget.
 
-The mean-token fields in [`results.json`](results.json) come from preserved raw
-records. The public README reports the arithmetic mean across all attempted
-runs. Tokens are cost diagnostics, not quality scores.
+Causeloom earned 28/39 official-verifier passes (71.8%) versus 21/39 (53.8%)
+for the no-skill baseline. All 78 attempts were exception-free and none reached
+the agent time limit. The mechanical closeout found zero violations and zero
+warnings.
+
+The arithmetic-mean token fields in [`results.json`](results.json) come from
+the 78 preserved raw Codex streams. Normalized total tokens equal input plus
+output; cached-input and reasoning fields are non-additive details. Tokens are
+cost diagnostics, not quality scores.
 
 ## Code-quality evidence
 
-The README also summarizes a post-hoc review by Codex with GPT-5.6 Sol. It uses
-actual preserved final artifacts and verifier traces from three matched a5
-comparisons. The review was not blinded and did not assign a subjective numeric
+The README includes a post-hoc Codex review of three shortened code comparisons
+from the same matched Luna run. It uses preserved final artifacts and verifier
+traces. The review was not blinded and did not assign a subjective numeric
 score, so it remains separate from official verifier reward.
 
-## Reproduce the figure
+## Reproduce the figures
 
 ```bash
 python docs/benchmarks/generate_charts.py
 ```
 
-The generator uses only the Python standard library and writes the full result
-chart plus a matched task chart limited to cells where Causeloom recorded an
-official success and the baseline recorded none.
+The standard-library generator writes three accessible SVGs:
+
+- the matched overall pass-rate comparison;
+- pass rates by preregistered task category; and
+- task cells where Causeloom passed at least once and the baseline passed zero.
 
 ## Audit provenance
 
-- Model: `gpt-5.6-sol`
-- Reasoning effort: `high`
-- Codex CLI: `0.146.0`
-- Run-order seed: `329`
-- Evaluated pre-publication policy SHA-256:
-  `1f94841a1edc6767277c666b5b0e57ba00f8b61046010c40d10fc9c38882df2e`
-- Published Causeloom 0.3.0 policy SHA-256 is recorded in `results.json` and
-  `evals/conditions/CHECKSUMS.sha256`.
-- Historical a3 audit SHA-256:
-  `ec597ac1ce5b73b4d2063fecf2e56fb9c3e7b01628d890272002c4b84569910e`
-- Incremental a5 audit SHA-256:
-  `40cf0f2db3088e8e256f0efe2d8fd75cfa5222df7d44e33150281b23cc5d8239`
+- Suite: `Terminal-Bench 2.0`.
+- Model: `gpt-5.6-luna`.
+- Reasoning effort: `max`.
+- Codex CLI: `0.146.0`.
+- Run-order seed: `329`.
+- Evaluated and published policy SHA-256:
+  `d4c313db9a48368c3ae0044c6f4686feb774c8d1a5c03d5b5d9b837d54753797`.
+- Benchmark lock SHA-256:
+  `f4931e14c505914c37b184b337aa4c7b40e1501191a089312a90d3c23194d6a1`.
+- Closeout audit SHA-256:
+  `1643df7726dbb4a2c80a0fbf93e27b7d064b852d22841f145cd85225ee2589ee`.
 
 Complete Harbor results, Codex event streams, rollout sessions, trajectories,
-verifier logs, final code, and private calibration conditions are retained
-locally and excluded from Git.
+verifier logs, and final code are retained locally under
+`work/research-benchmark-gpt56-luna-max-a6/` and excluded from Git.
+
+## Limits
+
+Official reward measures functional completion, not blinded engineering
+quality. Terminal-Bench 2.0 is public and may be contaminated for current
+models. The result covers one model and thirteen tasks; broader claims need
+other models, private holdouts, and a blinded review.

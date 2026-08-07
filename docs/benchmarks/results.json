@@ -1,59 +1,92 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "project": "Causeloom",
   "release": "0.3.0",
   "benchmark": {
     "suite": "Terminal-Bench 2.0",
-    "model": "gpt-5.6-sol",
-    "reasoning_effort": "high",
+    "model": "gpt-5.6-luna",
+    "reasoning_effort": "max",
     "codex_cli": "0.146.0",
     "run_order_seed": 329,
     "tasks": 13,
     "repetitions_per_cell": 3,
-    "evaluated_policy_sha256": "1f94841a1edc6767277c666b5b0e57ba00f8b61046010c40d10fc9c38882df2e",
+    "conditions": 2,
+    "planned_runs": 78,
+    "offline_adaptation": "a6",
+    "agent_timeout_multiplier": 4,
+    "evaluated_policy_sha256": "d4c313db9a48368c3ae0044c6f4686feb774c8d1a5c03d5b5d9b837d54753797",
     "release_policy_sha256": "d4c313db9a48368c3ae0044c6f4686feb774c8d1a5c03d5b5d9b837d54753797",
-    "release_policy_difference": "Branding, frontmatter metadata, heading, and attribution only; operational sections 1-8 and Anti-patterns are unchanged.",
-    "old_audit_sha256": "ec597ac1ce5b73b4d2063fecf2e56fb9c3e7b01628d890272002c4b84569910e",
-    "incremental_audit_sha256": "40cf0f2db3088e8e256f0efe2d8fd75cfa5222df7d44e33150281b23cc5d8239"
+    "benchmark_lock_sha256": "f4931e14c505914c37b184b337aa4c7b40e1501191a089312a90d3c23194d6a1",
+    "closeout_audit_sha256": "1643df7726dbb4a2c80a0fbf93e27b7d064b852d22841f145cd85225ee2589ee",
+    "audit_violations": 0,
+    "audit_warnings": 0
   },
-  "full_13_task_context": {
-    "description": "Thirteen tasks with three repetitions. Causeloom uses 39 a5 trials; the no-skill baseline uses 27 a5 trials and 12 completed historical a3 trials. Descriptive two-phase context, not a fully matched causal estimate.",
+  "matched_13_task_result": {
+    "description": "A fully matched comparison: thirteen tasks, three repetitions, identical seed and execution contract, and no timeout-flagged or otherwise exceptional results.",
     "conditions": [
       {
         "name": "No-skill baseline",
         "runs": 39,
-        "reward_1": 20,
-        "exception_free_reward_1": 19,
-        "timeouts": 4,
-        "mean_tokens_per_attempted_run": 420488,
-        "mean_tokens_per_successful_run": 397829,
-        "a5_runs": 27,
-        "a3_runs": 12
+        "reward_1": 21,
+        "exception_free_reward_1": 21,
+        "timeouts": 0,
+        "total_tokens": 101030781,
+        "mean_tokens_per_attempted_run": 2590533,
+        "median_elapsed_seconds": 765.959413
       },
       {
         "name": "Causeloom",
         "runs": 39,
-        "reward_1": 27,
-        "exception_free_reward_1": 25,
-        "timeouts": 4,
-        "mean_tokens_per_attempted_run": 523594,
-        "mean_tokens_per_successful_run": 539583,
-        "a5_runs": 39,
-        "a3_runs": 0
+        "reward_1": 28,
+        "exception_free_reward_1": 28,
+        "timeouts": 0,
+        "total_tokens": 97151882,
+        "mean_tokens_per_attempted_run": 2491074,
+        "median_elapsed_seconds": 770.83317
       }
     ]
   },
+  "category_results": [
+    {
+      "category": "Integration and build",
+      "task_ids": ["M01", "M02", "M03"],
+      "runs_per_condition": 9,
+      "baseline_reward_1": 8,
+      "causeloom_reward_1": 9
+    },
+    {
+      "category": "Extreme systems",
+      "task_ids": ["X01", "X02", "X03", "X04", "X05", "X06", "X07"],
+      "runs_per_condition": 21,
+      "baseline_reward_1": 7,
+      "causeloom_reward_1": 12
+    },
+    {
+      "category": "Targeted coverage",
+      "task_ids": ["C01", "C02", "C03"],
+      "runs_per_condition": 9,
+      "baseline_reward_1": 6,
+      "causeloom_reward_1": 7
+    }
+  ],
+  "task_results": [
+    {"task_id": "M01", "label": "Heap crash", "category": "Integration and build", "baseline_reward_1": 3, "causeloom_reward_1": 3},
+    {"task_id": "M02", "label": "Git deployment", "category": "Integration and build", "baseline_reward_1": 3, "causeloom_reward_1": 3},
+    {"task_id": "M03", "label": "SQLite with gcov", "category": "Integration and build", "baseline_reward_1": 2, "causeloom_reward_1": 3},
+    {"task_id": "X01", "label": "Batching scheduler", "category": "Extreme systems", "baseline_reward_1": 3, "causeloom_reward_1": 3},
+    {"task_id": "X02", "label": "Doom MIPS cross-build", "category": "Extreme systems", "baseline_reward_1": 0, "causeloom_reward_1": 0},
+    {"task_id": "X03", "label": "SQLite WAL recovery", "category": "Extreme systems", "baseline_reward_1": 0, "causeloom_reward_1": 3},
+    {"task_id": "X04", "label": "Tensor parallelism", "category": "Extreme systems", "baseline_reward_1": 2, "causeloom_reward_1": 3},
+    {"task_id": "X05", "label": "MIPS interpreter", "category": "Extreme systems", "baseline_reward_1": 1, "causeloom_reward_1": 2},
+    {"task_id": "X06", "label": "Pipeline parallelism", "category": "Extreme systems", "baseline_reward_1": 1, "causeloom_reward_1": 1},
+    {"task_id": "X07", "label": "HTML sanitizer", "category": "Extreme systems", "baseline_reward_1": 0, "causeloom_reward_1": 0},
+    {"task_id": "C01", "label": "Scientific stack", "category": "Targeted coverage", "baseline_reward_1": 3, "causeloom_reward_1": 3},
+    {"task_id": "C02", "label": "Key-value gRPC", "category": "Targeted coverage", "baseline_reward_1": 0, "causeloom_reward_1": 1},
+    {"task_id": "C03", "label": "Vulnerability fix", "category": "Targeted coverage", "baseline_reward_1": 3, "causeloom_reward_1": 3}
+  ],
   "causeloom_only_successes": {
-    "description": "Contemporaneous a5 task cells where Causeloom recorded at least one official reward-1 result and the no-skill baseline recorded none. Each condition has three attempts per task.",
+    "description": "Matched task cells where Causeloom recorded at least one official reward-1 result and the no-skill baseline recorded none.",
     "tasks": [
-      {
-        "task_id": "X02",
-        "label": "Doom MIPS cross-build",
-        "baseline_reward_1": 0,
-        "causeloom_reward_1": 1,
-        "runs_per_condition": 3,
-        "note": "The Causeloom reward-1 attempt passed all verifier checks but is timeout-flagged."
-      },
       {
         "task_id": "X03",
         "label": "SQLite WAL recovery",
@@ -62,19 +95,24 @@
         "runs_per_condition": 3
       },
       {
-        "task_id": "X04",
-        "label": "Tensor parallelism",
-        "baseline_reward_1": 0,
-        "causeloom_reward_1": 1,
-        "runs_per_condition": 3
-      },
-      {
-        "task_id": "X06",
-        "label": "Pipeline parallelism",
+        "task_id": "C02",
+        "label": "Key-value gRPC",
         "baseline_reward_1": 0,
         "causeloom_reward_1": 1,
         "runs_per_condition": 3
       }
     ]
+  },
+  "artifact_completeness": {
+    "terminal_runs": 78,
+    "app_exports": 78,
+    "artifact_manifests": 78,
+    "codex_streams": 78,
+    "rollout_sessions": 78,
+    "thread_identifiers": 78,
+    "token_covered_runs": 78,
+    "timeouts": 0,
+    "nested_exceptions": 0,
+    "infrastructure_invalid_attempts": 0
   }
 }

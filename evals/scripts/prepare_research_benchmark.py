@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 import shutil
+import tomllib
 from pathlib import Path
 
 
@@ -19,6 +20,9 @@ AGENT_TIMEOUT_MULTIPLIER = 4.0
 EXPECTED_TASKS = 13
 CONDITIONS = ("baseline", "causeloom")
 REPETITIONS = 3
+SCHEDULER_MODE = "global-work-conserving"
+MAX_PARALLEL_RUNS_PER_TASK = 2
+SCHEDULER_MEMORY_BUDGET_GB = 20.0
 DOOM_WAD_SHA256 = "1d7d43be501e67d927e415e0b8f3e29c3bf33075e859721816f652a526cac771"
 DOOM_WAD_SOURCE_IMAGE = (
     "alexgshaw/make-mips-interpreter@"
@@ -31,6 +35,18 @@ FIVE_WORKER_TASKS = {
     "worker-04": ["X02", "X03"],
     "worker-05": ["X05", "X07"],
 }
+
+
+def environment_memory_gb(task_toml: str) -> float:
+    parsed = tomllib.loads(task_toml)
+    value = parsed.get("environment", {}).get("memory")
+    if not isinstance(value, str):
+        raise ValueError("Task environment must define memory as a string")
+    match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*([MG])B?\s*", value, re.I)
+    if match is None:
+        raise ValueError(f"Unsupported task memory value: {value!r}")
+    amount = float(match.group(1))
+    return amount if match.group(2).upper() == "G" else amount / 1024.0
 
 
 def build_worker_tasks(suite_ids: list[str], worker_slots: int) -> dict[str, list[str]]:
@@ -277,7 +293,13 @@ def prepare(
     assets_root: Path,
     worker_slots: int = 5,
     condition_plan_path: Path | None = None,
+    max_parallel_runs_per_task: int = MAX_PARALLEL_RUNS_PER_TASK,
+    scheduler_memory_budget_gb: float = SCHEDULER_MEMORY_BUDGET_GB,
 ) -> dict[str, object]:
+    if max_parallel_runs_per_task < 1:
+        raise ValueError("max_parallel_runs_per_task must be positive")
+    if scheduler_memory_budget_gb <= 0:
+        raise ValueError("scheduler_memory_budget_gb must be positive")
     suite = read_rows(suite_path)
     matrix = read_rows(matrix_path)
     if len(suite) != EXPECTED_TASKS:
@@ -389,6 +411,7 @@ def prepare(
                 "tests_sha256": component_digest(source, "tests"),
                 "solution_sha256": component_digest(source, "solution"),
                 "docker_image": docker_image,
+                "environment_memory_gb": environment_memory_gb(task_toml),
             }
         )
         task_runs[suite_id] = sorted(
@@ -444,6 +467,12 @@ def prepare(
             "web_search": "disabled",
             "mcp_servers": [],
         },
+        "scheduler": {
+            "mode": SCHEDULER_MODE,
+            "max_parallel_runs_per_task": max_parallel_runs_per_task,
+            "memory_budget_gb": scheduler_memory_budget_gb,
+            "priority": "seeded-global-execution-order",
+        },
         "offline_compose_path": compose_path.as_posix(),
         "offline_assets": {
             "doom1.wad": {
@@ -491,6 +520,18 @@ def main() -> None:
         default=5,
         help="Freeze five balanced task queues or one queue per suite task",
     )
+    parser.add_argument(
+        "--max-parallel-runs-per-task",
+        type=int,
+        default=MAX_PARALLEL_RUNS_PER_TASK,
+        help="Freeze the per-task concurrency cap for work-conserving scheduling",
+    )
+    parser.add_argument(
+        "--scheduler-memory-budget-gb",
+        type=float,
+        default=SCHEDULER_MEMORY_BUDGET_GB,
+        help="Freeze the aggregate task-container memory budget",
+    )
     args = parser.parse_args()
     lock = prepare(
         args.suite,
@@ -501,6 +542,8 @@ def main() -> None:
         args.assets_root,
         args.worker_slots,
         args.condition_plan,
+        args.max_parallel_runs_per_task,
+        args.scheduler_memory_budget_gb,
     )
     print(
         f"Prepared {len(lock['tasks'])} tasks and "

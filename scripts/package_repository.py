@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import stat
 import zipfile
 from pathlib import Path
@@ -41,6 +42,20 @@ def include(path: Path, root: Path) -> bool:
     return path.is_file()
 
 
+def iter_included_files(root: Path):
+    """Yield package files without descending into excluded artifact trees."""
+    for directory, dirnames, filenames in os.walk(root):
+        current = Path(directory)
+        relative = current.relative_to(root)
+        if relative.parts == ("evals",):
+            dirnames[:] = [name for name in dirnames if name != "private-conditions"]
+        dirnames[:] = sorted(name for name in dirnames if name not in EXCLUDED_DIRS)
+        for filename in sorted(filenames):
+            path = current / filename
+            if include(path, root):
+                yield path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
@@ -56,7 +71,7 @@ def main() -> None:
     name = str(metadata["name"])
     version = (root / "VERSION").read_text(encoding="utf-8").strip()
     archive_root = name
-    files = sorted(path for path in root.rglob("*") if include(path, root))
+    files = sorted(iter_included_files(root))
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(args.output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:

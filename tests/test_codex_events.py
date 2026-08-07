@@ -9,10 +9,23 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "evals/scripts"))
 
-from codex_events import parse_cli_events, parse_desktop_session  # noqa: E402
+from codex_events import parse_cli_events, parse_desktop_session, read_jsonl  # noqa: E402
 
 
 class CodexEventsTest(unittest.TestCase):
+    def test_jsonl_reader_preserves_unicode_line_separators_inside_strings(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "events.jsonl"
+            path.write_text(
+                '{"type":"tool_output","text":"left\u2028right"}\n'
+                '{"type":"done"}\n',
+                encoding="utf-8",
+            )
+            events, errors = read_jsonl(path)
+        self.assertEqual(errors, [])
+        self.assertEqual(len(events), 2)
+        self.assertEqual(events[0]["text"], "left\u2028right")
+
     def test_cli_parser_sums_turns_without_double_counting_details(self):
         with tempfile.TemporaryDirectory() as temp:
             first = Path(temp) / "one.jsonl"
