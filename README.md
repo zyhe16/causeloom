@@ -38,21 +38,7 @@ remains after the requirement is actually satisfied.
 
 ## Install
 
-### Recommended: pinned release archive
-
-Install the exact release and verify its checksum before extracting it:
-
-```bash
-curl -LO https://github.com/zyhe16/causeloom/releases/download/v0.3.0/causeloom-0.3.0.zip
-echo "2a7d93bbce926131fe7891c83cc6d95c162c4e66f56a8da713097e417f32e522  causeloom-0.3.0.zip" | sha256sum -c -
-mkdir -p ~/.agents/skills
-unzip causeloom-0.3.0.zip -d ~/.agents/skills
-```
-
-This is the deterministic option: both the version and archive bytes are
-pinned. The resulting skill is at `~/.agents/skills/causeloom/SKILL.md`.
-
-### Agent Skills CLI
+### Agent Skills CLI (recommended)
 
 ```bash
 npx skills add zyhe16/causeloom
@@ -63,15 +49,14 @@ npx skills add zyhe16/causeloom
 Alternatively, ask an agent to choose the correct user-level directory:
 
 ```text
-Install Causeloom v0.3.0 from https://github.com/zyhe16/causeloom.
-Prefer the pinned release archive and verify its published SHA-256 checksum.
-Use the correct user-level skills directory for this agent, validate the
-installed SKILL.md, and do not modify unrelated files.
+Install Causeloom from https://github.com/zyhe16/causeloom using
+`npx skills add zyhe16/causeloom`. Verify that the installed skill is named
+`causeloom`, validate its SKILL.md, and do not modify unrelated files.
 ```
 
 Invoke the installed skill with `$causeloom`; in ChatGPT desktop, type `@` and
-select **Causeloom**. Windows, project-local, and source-checkout layouts are
-covered in [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
+select **Causeloom**. More details are in
+[`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
 ## Results
 
