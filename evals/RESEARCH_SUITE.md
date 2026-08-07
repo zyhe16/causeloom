@@ -124,15 +124,23 @@ Before model runs:
 6. pin the same task resources, timeouts, network policy, model, reasoning effort, and Codex version for every condition; and
 7. randomize the 78-run order with seed `329` while keeping three repetitions per task-condition pair.
 
-For the rc3 benchmark, offline adaptation `a5` doubles every upstream
-`[agent].timeout_sec` while leaving verifier and environment-build timeouts
-unchanged. The effective agent limits are therefore 30 minutes for M02, M03,
+The completed rc3 benchmark used offline adaptation `a5`, which doubled every
+upstream `[agent].timeout_sec` while leaving verifier and environment-build
+timeouts unchanged. Its effective agent limits were 30 minutes for M02, M03,
 X02, X03, X04, X06, C02, and C03; 20 minutes for C01; and 60 minutes for M01,
-X01, X05, and X07. This is a new frozen execution contract. Results produced
-under a5 and a3 must remain separate for causal or matched claims. A hybrid
-descriptive view may use the latest a5 cell where rerun and the historical a3
-cell where skipped only when every source count and this comparability limit are
-shown explicitly.
+X01, X05, and X07. Results produced under a5 and a3 remain separate for causal
+or matched claims. A hybrid descriptive view may use the latest a5 cell where
+rerun and the historical a3 cell where skipped only when every source count and
+this comparability limit are shown explicitly.
+
+The GPT-5.6 Luna experiment uses a new offline adaptation, `a6`, that doubles
+the a5 limits again: four times each upstream `[agent].timeout_sec`. Its
+effective agent limits are 60 minutes for M02, M03, X02, X03, X04, X06, C02,
+and C03; 40 minutes for C01; and 120 minutes for M01, X01, X05, and X07.
+Verifier and environment-build timeouts remain unchanged. This is a separate
+frozen execution contract. The primary comparison is Causeloom versus the
+no-skill baseline within the Luna a6 run; comparisons with Sol a5 are
+descriptive because both the model and timeout contract changed.
 
 `prepare_research_benchmark.py` projects the seeded matrix into five independent workers with 3/3/3/2/2 task queues. Each worker executes its condition/repetition trials sequentially in the relative order established by the global seed; the five workers run concurrently. The two 4 GB PyTorch tasks are assigned to different workers, and each added coverage task uses 2 GB. Every trial gets a fresh Harbor environment and Codex home. The runner refuses to start until `work/research-benchmark-dynamic/preflight/MODEL_FREE_READY.json` exists, preserves Harbor's resolved locks and raw Codex logs, and exports `/app` for later blinded code review.
 

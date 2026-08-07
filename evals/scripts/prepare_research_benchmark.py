@@ -14,8 +14,8 @@ from pathlib import Path
 
 DATASET = "terminal-bench@2.0"
 MODEL_RELAY_IMAGE = "causeloom/model-relay:0.1.1"
-ADAPTATION_VERSION = "a5"
-AGENT_TIMEOUT_MULTIPLIER = 2.0
+ADAPTATION_VERSION = "a6"
+AGENT_TIMEOUT_MULTIPLIER = 4.0
 EXPECTED_TASKS = 13
 CONDITIONS = ("baseline", "causeloom")
 REPETITIONS = 3
@@ -68,11 +68,11 @@ def adapt_task_toml(path: Path) -> None:
     if timeout_match is None:
         raise ValueError(f"Missing numeric agent timeout_sec in {path}")
     original_timeout = timeout_match.group("value")
-    doubled_timeout = float(original_timeout) * AGENT_TIMEOUT_MULTIPLIER
+    adapted_timeout = float(original_timeout) * AGENT_TIMEOUT_MULTIPLIER
     replacement_timeout = (
-        f"{doubled_timeout:.1f}"
+        f"{adapted_timeout:.1f}"
         if "." in original_timeout
-        else str(int(doubled_timeout))
+        else str(int(adapted_timeout))
     )
     adapted_agent_section = (
         'network_mode = "no-network"\n'
@@ -354,6 +354,7 @@ def prepare(
                 "upstream_digest": upstream_digest,
                 "adaptation": {
                     "agent_network_mode": "no-network",
+                    "agent_timeout_multiplier": AGENT_TIMEOUT_MULTIPLIER,
                     "network_overlay": "dynamic-public-with-fixed-model-relay",
                     "preinstalled_packages": preinstalled_packages,
                 },
@@ -419,6 +420,8 @@ def prepare(
     lock: dict[str, object] = {
         "schema_version": 2,
         "dataset": DATASET,
+        "adaptation_version": ADAPTATION_VERSION,
+        "agent_timeout_multiplier": AGENT_TIMEOUT_MULTIPLIER,
         "run_order_seed": 329,
         "planned_runs": expected_runs,
         "matrix_sha256": sha256_file(matrix_path),

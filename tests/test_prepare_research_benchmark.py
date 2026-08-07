@@ -43,7 +43,7 @@ class PrepareResearchBenchmarkTest(unittest.TestCase):
             )
             self.assertNotIn("ports", compose["services"]["model-relay"])
 
-    def test_task_agent_phase_is_no_network_and_timeout_is_doubled(self):
+    def test_task_agent_phase_is_no_network_and_timeout_is_quadrupled(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "task.toml"
             path.write_text(
@@ -58,7 +58,7 @@ class PrepareResearchBenchmarkTest(unittest.TestCase):
             MODULE.adapt_task_toml(path)
             adapted = path.read_text(encoding="utf-8")
             self.assertIn('network_mode = "no-network"', adapted)
-            self.assertIn("[agent]\nnetwork_mode = \"no-network\"\ntimeout_sec = 20.0", adapted)
+            self.assertIn("[agent]\nnetwork_mode = \"no-network\"\ntimeout_sec = 40.0", adapted)
             self.assertIn("[verifier]\ntimeout_sec = 10.0", adapted)
             self.assertIn("[environment]\nbuild_timeout_sec = 5.0", adapted)
 

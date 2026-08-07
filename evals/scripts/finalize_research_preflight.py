@@ -66,7 +66,12 @@ def main() -> None:
     parser.add_argument("--nop-job", default="nop-final")
     parser.add_argument("--isolation-job", default="isolation-final")
     args = parser.parse_args()
-    tasks_root = args.tasks_root or args.root / "tasks-a5"
+    lock_path = args.root / "benchmark-lock.json"
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    adaptation_version = lock.get("adaptation_version", "a5")
+    if not isinstance(adaptation_version, str) or not adaptation_version:
+        raise SystemExit("Benchmark lock has an invalid adaptation_version")
+    tasks_root = args.tasks_root or args.root / f"tasks-{adaptation_version}"
     preflight = args.root / "preflight"
     oracle_dir = preflight / args.oracle_job
     nop_dir = preflight / args.nop_job
@@ -76,8 +81,6 @@ def main() -> None:
     nop_rewards = rewards(nop_dir)
     isolation = probes(isolation_dir)
     randomness = audit_randomness(tasks_root)
-    lock_path = args.root / "benchmark-lock.json"
-    lock = json.loads(lock_path.read_text(encoding="utf-8"))
     expected_tasks = len(lock.get("tasks", []))
     if len(oracle_rewards) != expected_tasks or set(oracle_rewards.values()) != {1.0}:
         raise SystemExit(f"Oracle gate failed: {oracle_rewards}")
