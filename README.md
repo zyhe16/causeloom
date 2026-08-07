@@ -41,10 +41,12 @@ remains after the requirement is actually satisfied.
 ### Agent Skills CLI (recommended)
 
 ```bash
-npx skills add zyhe16/causeloom --agent codex -y
+npx skills add zyhe16/causeloom
 ```
 
-The explicit agent and `-y` flag bypass the interactive tool selector.
+> [!NOTE]
+> **Codex-only, non-interactive install:** if the agent selector glitches, use
+> `npx skills add zyhe16/causeloom --agent codex -y`.
 
 ### Ask your coding agent
 
@@ -52,9 +54,9 @@ Alternatively, ask an agent to choose the correct user-level directory:
 
 ```text
 Install Causeloom from https://github.com/zyhe16/causeloom using
-`npx skills add zyhe16/causeloom --agent codex -y`. Verify that the installed
-skill is named `causeloom`, validate its SKILL.md, and do not modify unrelated
-files.
+`npx skills add zyhe16/causeloom`. Select the appropriate agent harness, verify
+that the installed skill is named `causeloom`, validate its SKILL.md, and do
+not modify unrelated files.
 ```
 
 Invoke the installed skill with `$causeloom`; in ChatGPT desktop, type `@` and

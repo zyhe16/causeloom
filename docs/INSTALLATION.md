@@ -6,12 +6,15 @@ frontmatter `name`.
 ## Agent Skills CLI (recommended)
 
 ```bash
-npx skills add zyhe16/causeloom --agent codex -y
+npx skills add zyhe16/causeloom
 ```
 
-The explicit agent and `-y` flag bypass the interactive tool selector. The CLI
-finds the repository's `causeloom` skill and installs it into Codex's supported
-skills directory.
+The CLI finds the repository's `causeloom` skill and lets you select any
+supported agent harness.
+
+> [!NOTE]
+> **Codex-only, non-interactive install:** if the agent selector glitches, use
+> `npx skills add zyhe16/causeloom --agent codex -y`.
 
 ## Ask your coding agent
 
@@ -20,9 +23,9 @@ directory:
 
 ```text
 Install Causeloom from https://github.com/zyhe16/causeloom using
-`npx skills add zyhe16/causeloom --agent codex -y`. Verify that the installed
-skill is named `causeloom`, validate its SKILL.md, and do not modify unrelated
-files.
+`npx skills add zyhe16/causeloom`. Select the appropriate agent harness, verify
+that the installed skill is named `causeloom`, validate its SKILL.md, and do
+not modify unrelated files.
 ```
 
 The agent should inspect the CLI result rather than assuming one
