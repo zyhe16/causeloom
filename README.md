@@ -41,8 +41,10 @@ remains after the requirement is actually satisfied.
 ### Agent Skills CLI (recommended)
 
 ```bash
-npx skills add zyhe16/causeloom
+npx skills add zyhe16/causeloom --agent codex -y
 ```
+
+The explicit agent and `-y` flag bypass the interactive tool selector.
 
 ### Ask your coding agent
 
@@ -50,8 +52,9 @@ Alternatively, ask an agent to choose the correct user-level directory:
 
 ```text
 Install Causeloom from https://github.com/zyhe16/causeloom using
-`npx skills add zyhe16/causeloom`. Verify that the installed skill is named
-`causeloom`, validate its SKILL.md, and do not modify unrelated files.
+`npx skills add zyhe16/causeloom --agent codex -y`. Verify that the installed
+skill is named `causeloom`, validate its SKILL.md, and do not modify unrelated
+files.
 ```
 
 Invoke the installed skill with `$causeloom`; in ChatGPT desktop, type `@` and
@@ -59,6 +62,10 @@ select **Causeloom**. More details are in
 [`docs/INSTALLATION.md`](docs/INSTALLATION.md).
 
 ## Results
+
+All 13 selected problems come from
+[Terminal-Bench 2.0](https://www.tbench.ai/benchmarks/terminal-bench-2), with
+three attempts per condition for each problem.
 
 ![Official reward across all 39 attempts](docs/assets/benchmark-full.svg)
 
