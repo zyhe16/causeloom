@@ -47,6 +47,7 @@ class RunResearchBenchmarkTest(unittest.TestCase):
             tasks,
         )
         self.assertEqual(config["task_memory_gb"], {"A": 2.0, "B": 4.0})
+        self.assertEqual(config["max_workers"], 8)
         workers = {
             "worker-01": [
                 {"run_id": "A-r2", "task_id": "A", "execution_order": "2"}
@@ -297,16 +298,34 @@ class RunResearchBenchmarkTest(unittest.TestCase):
             source = root / "source.toml"
             output = root / "output.toml"
             source.write_text(
-                'model = "gpt-5.6-sol"\n'
-                'model_reasoning_effort = "high"\n'
+                'model = "gpt-5.6-luna"\n'
+                'model_reasoning_effort = "max"\n'
                 '[mcp_servers.example]\ncommand = "should-not-copy"\n',
                 encoding="utf-8",
             )
-            CONFIG.prepare(source, output, "gpt-5.6-sol", "high")
+            CONFIG.prepare(
+                source,
+                output,
+                CONFIG.STANDARD_MODEL,
+                CONFIG.STANDARD_REASONING_EFFORT,
+            )
             self.assertEqual(
                 output.read_text(encoding="utf-8"),
-                'model = "gpt-5.6-sol"\nmodel_reasoning_effort = "high"\n',
+                'model = "gpt-5.6-luna"\nmodel_reasoning_effort = "max"\n',
             )
+
+    def test_standard_execution_defaults_match_luna_max_benchmark(self):
+        self.assertEqual(RUNNER.STANDARD_MODEL, "gpt-5.6-luna")
+        self.assertEqual(RUNNER.STANDARD_REASONING_EFFORT, "max")
+        self.assertEqual(RUNNER.STANDARD_MAX_WORKERS, 8)
+        self.assertEqual(RUNNER.STANDARD_CODEX_VERSION, "0.146.0")
+        self.assertEqual(
+            RUNNER.STANDARD_CODEX_BINARY_SHA256,
+            "2E863156ED35ECC5253B1E2F907A9143077B9F7CB51942070C61996471FF6E04",
+        )
+        self.assertEqual(
+            RUNNER.STANDARD_ROOT, Path("work/research-benchmark-standard")
+        )
 
 
 if __name__ == "__main__":

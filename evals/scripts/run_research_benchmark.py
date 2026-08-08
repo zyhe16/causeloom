@@ -26,6 +26,17 @@ from pathlib import Path
 CONDITION_PATHS = {
     "causeloom": Path("evals/conditions/causeloom/POLICY.md"),
 }
+STANDARD_ROOT = Path("work/research-benchmark-standard")
+STANDARD_MODEL = "gpt-5.6-luna"
+STANDARD_REASONING_EFFORT = "max"
+STANDARD_MAX_WORKERS = 8
+STANDARD_CODEX_VERSION = "0.146.0"
+STANDARD_CODEX_BINARY = Path(
+    "work/codex-linux/package/vendor/x86_64-unknown-linux-musl/bin/codex"
+)
+STANDARD_CODEX_BINARY_SHA256 = (
+    "2E863156ED35ECC5253B1E2F907A9143077B9F7CB51942070C61996471FF6E04"
+)
 
 
 def sha256_file(path: Path) -> str:
@@ -179,10 +190,17 @@ def scheduler_config(
         raise ValueError("Lock has an unsupported scheduler contract")
     max_per_task = raw.get("max_parallel_runs_per_task")
     memory_budget = raw.get("memory_budget_gb")
+    max_workers = raw.get("max_workers", STANDARD_MAX_WORKERS)
     if not isinstance(max_per_task, int) or max_per_task < 1:
         raise ValueError("Scheduler max_parallel_runs_per_task must be positive")
     if not isinstance(memory_budget, (int, float)) or memory_budget <= 0:
         raise ValueError("Scheduler memory_budget_gb must be positive")
+    if (
+        not isinstance(max_workers, int)
+        or isinstance(max_workers, bool)
+        or max_workers < 1
+    ):
+        raise ValueError("Scheduler max_workers must be a positive integer")
     task_memory: dict[str, float] = {}
     for task_id, task in tasks.items():
         value = task.get("environment_memory_gb")
@@ -195,6 +213,7 @@ def scheduler_config(
         "mode": "global-work-conserving",
         "max_parallel_runs_per_task": max_per_task,
         "memory_budget_gb": float(memory_budget),
+        "max_workers": max_workers,
         "task_memory_gb": task_memory,
     }
 
@@ -371,7 +390,7 @@ def main() -> None:
     parser.add_argument(
         "--lock",
         type=Path,
-        default=Path("work/research-benchmark-dynamic/benchmark-lock.json"),
+        default=STANDARD_ROOT / "benchmark-lock.json",
     )
     parser.add_argument(
         "--attempt-archive-root",
@@ -381,12 +400,18 @@ def main() -> None:
     parser.add_argument(
         "--harbor", type=Path, default=Path("work/harbor-venv/Scripts/harbor.exe")
     )
-    parser.add_argument("--codex-version", default="0.146.0")
-    parser.add_argument("--codex-config", type=Path, required=True)
-    parser.add_argument("--codex-binary", type=Path, required=True)
-    parser.add_argument("--codex-binary-sha256", required=True)
-    parser.add_argument("--expected-model", default="gpt-5.6-sol")
-    parser.add_argument("--expected-reasoning-effort", default="high")
+    parser.add_argument("--codex-version", default=STANDARD_CODEX_VERSION)
+    parser.add_argument(
+        "--codex-config", type=Path, default=STANDARD_ROOT / "codex.config.toml"
+    )
+    parser.add_argument("--codex-binary", type=Path, default=STANDARD_CODEX_BINARY)
+    parser.add_argument(
+        "--codex-binary-sha256", default=STANDARD_CODEX_BINARY_SHA256
+    )
+    parser.add_argument("--expected-model", default=STANDARD_MODEL)
+    parser.add_argument(
+        "--expected-reasoning-effort", default=STANDARD_REASONING_EFFORT
+    )
     parser.add_argument(
         "--auth-json", type=Path, default=Path.home() / ".codex" / "auth.json"
     )
@@ -401,13 +426,13 @@ def main() -> None:
     parser.add_argument(
         "--jobs-root",
         type=Path,
-        default=Path("work/research-benchmark-dynamic/jobs"),
+        default=STANDARD_ROOT / "jobs",
     )
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
         "--max-workers",
         type=int,
-        help="Maximum worker slots to execute concurrently; defaults to every locked slot",
+        help="Override the lock's worker cap; the standard lock defaults to eight",
     )
     parser.add_argument(
         "--stop-on-infrastructure-error",
@@ -432,7 +457,14 @@ def main() -> None:
         validate_condition_hashes(lock_data)
     except ValueError as error:
         raise SystemExit(str(error)) from error
-    max_workers = args.max_workers if args.max_workers is not None else len(workers)
+    default_max_workers = (
+        int(scheduler["max_workers"])
+        if scheduler is not None
+        else min(STANDARD_MAX_WORKERS, len(workers))
+    )
+    max_workers = (
+        args.max_workers if args.max_workers is not None else default_max_workers
+    )
     if max_workers < 1 or max_workers > len(workers):
         raise SystemExit(f"--max-workers must be between 1 and {len(workers)}")
     if not args.harbor.is_file():

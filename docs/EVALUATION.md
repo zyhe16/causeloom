@@ -45,6 +45,19 @@ published in [`benchmarks/`](benchmarks/). It is a fully matched 78-run
 comparison under the a6 execution contract; no historical cells are pooled
 into the public result.
 
+## Standard execution profile
+
+Every newly prepared benchmark uses GPT-5.6 Luna with max reasoning, Codex CLI
+0.146.0, seed 329, the complete 78-run matrix, thirteen one-task queues, and
+eight concurrent workers. The a7 adaptation has no agent timeout. Its global
+work-conserving scheduler allows at most two repetitions of one task at once
+and at most 20 GB of aggregate declared task memory.
+
+The lock freezes these values before model execution. Changing the model,
+reasoning effort, matrix, queue layout, worker cap, scheduler limits, or agent
+timeout policy creates a different benchmark contract and requires fresh
+model-free preflight evidence.
+
 ## Freeze the environment
 
 Keep constant:
@@ -55,13 +68,17 @@ Keep constant:
 - local versus cloud execution;
 - repository snapshot and task prompt;
 - sandbox, permissions, network access, hooks, and tools;
-- context, time, and tool budgets; and
+- context and tool budgets; and
 - all common instructions outside the selected policy.
 
 The agent phase must have no general internet egress and no browser, web-search,
 MCP, or connector tools. Image pulls and dependency installation happen before
-the timed task. If Codex requires a local model relay, expose only that endpoint
+agent work. If Codex requires a local model relay, expose only that endpoint
 through a dedicated allowlist and verify that arbitrary outbound requests fail.
+
+Do not impose an agent-phase time limit. Keep verifier, agent-setup, and
+environment-build timeouts as infrastructure health checks; they do not cap a
+healthy model's working time.
 
 Use a fresh repository and fresh chat for every run. Randomize execution order.
 Use an isolated Codex evaluation profile to prevent unrelated global skills and

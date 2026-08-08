@@ -53,7 +53,7 @@ class PrepareResearchBenchmarkTest(unittest.TestCase):
             )
             self.assertNotIn("ports", compose["services"]["model-relay"])
 
-    def test_task_agent_phase_is_no_network_and_timeout_is_quadrupled(self):
+    def test_task_agent_phase_is_no_network_and_has_no_timeout(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "task.toml"
             path.write_text(
@@ -68,15 +68,33 @@ class PrepareResearchBenchmarkTest(unittest.TestCase):
             MODULE.adapt_task_toml(path)
             adapted = path.read_text(encoding="utf-8")
             self.assertIn('network_mode = "no-network"', adapted)
-            self.assertIn("[agent]\nnetwork_mode = \"no-network\"\ntimeout_sec = 40.0", adapted)
+            agent_section = adapted.split("[agent]", 1)[1].split(
+                "[environment]", 1
+            )[0]
+            self.assertNotIn("timeout_sec", agent_section)
             self.assertIn("[verifier]\ntimeout_sec = 10.0", adapted)
             self.assertIn("[environment]\nbuild_timeout_sec = 5.0", adapted)
 
-    def test_task_agent_phase_requires_a_numeric_timeout(self):
+    def test_task_agent_phase_accepts_an_already_unlimited_task(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "task.toml"
             path.write_text("[agent]\n\n[environment]\n", encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "agent timeout_sec"):
+            MODULE.adapt_task_toml(path)
+            adapted = path.read_text(encoding="utf-8")
+            agent_section = adapted.split("[agent]", 1)[1].split(
+                "[environment]", 1
+            )[0]
+            self.assertIn('network_mode = "no-network"', agent_section)
+            self.assertNotIn("timeout_sec", agent_section)
+
+    def test_task_agent_phase_rejects_a_non_numeric_timeout(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "task.toml"
+            path.write_text(
+                '[agent]\ntimeout_sec = "forever"\n\n[environment]\n',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "must be numeric"):
                 MODULE.adapt_task_toml(path)
 
     def test_only_declared_infrastructure_is_preinstalled(self):
@@ -132,23 +150,22 @@ class PrepareResearchBenchmarkTest(unittest.TestCase):
                 "docker_image", (root / "task.toml").read_text(encoding="utf-8")
             )
 
-    def test_worker_assignments_support_five_or_one_slot_per_task(self):
+    def test_worker_assignments_use_one_slot_per_task(self):
         suite_ids = [
             "M01", "M02", "M03", "X01", "X02", "X03", "X04", "X05",
             "X06", "X07", "C01", "C02", "C03",
         ]
-        five = MODULE.build_worker_tasks(suite_ids, 5)
-        thirteen = MODULE.build_worker_tasks(suite_ids, 13)
-        self.assertEqual(five, MODULE.FIVE_WORKER_TASKS)
+        thirteen = MODULE.build_worker_tasks(suite_ids)
         self.assertEqual(len(thirteen), 13)
         self.assertTrue(all(len(tasks) == 1 for tasks in thirteen.values()))
         self.assertEqual(
             {task for tasks in thirteen.values() for task in tasks}, set(suite_ids)
         )
-        with self.assertRaises(ValueError):
-            MODULE.build_worker_tasks(suite_ids, 8)
+        self.assertEqual(MODULE.STANDARD_MAX_WORKERS, 8)
+        self.assertEqual(MODULE.ADAPTATION_VERSION, "a7")
+        self.assertEqual(MODULE.LOCK_SCHEMA_VERSION, 3)
 
-    def test_checked_in_matrix_supports_five_two_task_workers(self):
+    def test_checked_in_matrix_supports_one_queue_per_task(self):
         matrix = ROOT / "work/research-runs.csv"
         if not matrix.exists():
             self.skipTest("generated matrix is intentionally ignored")
@@ -157,16 +174,14 @@ class PrepareResearchBenchmarkTest(unittest.TestCase):
         task_runs: dict[str, list[dict[str, str]]] = {}
         for row in rows:
             task_runs.setdefault(row["task_id"], []).append(row)
+        worker_tasks = MODULE.build_worker_tasks(list(task_runs))
         workers = {
             worker: [run for task in tasks for run in task_runs[task]]
-            for worker, tasks in MODULE.FIVE_WORKER_TASKS.items()
+            for worker, tasks in worker_tasks.items()
         }
-        self.assertEqual(len(workers), 5)
-        self.assertEqual(sorted(len(runs) for runs in workers.values()), [12, 12, 18, 18, 18])
-        self.assertEqual(
-            sorted(len(tasks) for tasks in MODULE.FIVE_WORKER_TASKS.values()),
-            [2, 2, 3, 3, 3],
-        )
+        self.assertEqual(len(workers), 13)
+        self.assertTrue(all(len(tasks) == 1 for tasks in worker_tasks.values()))
+        self.assertTrue(all(len(runs) == 6 for runs in workers.values()))
         self.assertEqual(len({row["run_id"] for row in rows}), 78)
 
 

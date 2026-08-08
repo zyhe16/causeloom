@@ -86,7 +86,7 @@ def main() -> None:
     parser.add_argument(
         "--codex-config",
         type=Path,
-        default=Path("work/research-benchmark-dynamic/codex.config.toml"),
+        default=Path("work/research-benchmark-standard/codex.config.toml"),
     )
     args = parser.parse_args()
 

@@ -15,28 +15,20 @@ from pathlib import Path
 
 DATASET = "terminal-bench@2.0"
 MODEL_RELAY_IMAGE = "causeloom/model-relay:0.1.1"
-ADAPTATION_VERSION = "a6"
-AGENT_TIMEOUT_MULTIPLIER = 4.0
+LOCK_SCHEMA_VERSION = 3
+ADAPTATION_VERSION = "a7"
 EXPECTED_TASKS = 13
 CONDITIONS = ("baseline", "causeloom")
 REPETITIONS = 3
 SCHEDULER_MODE = "global-work-conserving"
 MAX_PARALLEL_RUNS_PER_TASK = 2
 SCHEDULER_MEMORY_BUDGET_GB = 20.0
+STANDARD_MAX_WORKERS = 8
 DOOM_WAD_SHA256 = "1d7d43be501e67d927e415e0b8f3e29c3bf33075e859721816f652a526cac771"
 DOOM_WAD_SOURCE_IMAGE = (
     "alexgshaw/make-mips-interpreter@"
     "sha256:082fc8821b317f30fdfbf8d08d528874ce331c03e8083aef0406d48cdd7132a2"
 )
-FIVE_WORKER_TASKS = {
-    "worker-01": ["M01", "X04", "C01"],
-    "worker-02": ["M02", "X06", "C02"],
-    "worker-03": ["M03", "X01", "C03"],
-    "worker-04": ["X02", "X03"],
-    "worker-05": ["X05", "X07"],
-}
-
-
 def environment_memory_gb(task_toml: str) -> float:
     parsed = tomllib.loads(task_toml)
     value = parsed.get("environment", {}).get("memory")
@@ -49,20 +41,13 @@ def environment_memory_gb(task_toml: str) -> float:
     return amount if match.group(2).upper() == "G" else amount / 1024.0
 
 
-def build_worker_tasks(suite_ids: list[str], worker_slots: int) -> dict[str, list[str]]:
-    if worker_slots == 5:
-        assignments = {key: list(value) for key, value in FIVE_WORKER_TASKS.items()}
-        if {task for tasks in assignments.values() for task in tasks} != set(suite_ids):
-            raise ValueError("Five-worker assignments must cover each suite task exactly once")
-        return assignments
-    if worker_slots == len(suite_ids):
-        return {
-            f"worker-{index:02d}": [suite_id]
-            for index, suite_id in enumerate(suite_ids, start=1)
-        }
-    raise ValueError(
-        f"worker_slots must be 5 or match the {len(suite_ids)} suite tasks"
-    )
+def build_worker_tasks(suite_ids: list[str]) -> dict[str, list[str]]:
+    """Create the standard one-task queue for every suite task."""
+
+    return {
+        f"worker-{index:02d}": [suite_id]
+        for index, suite_id in enumerate(suite_ids, start=1)
+    }
 
 
 def adapt_task_toml(path: Path) -> None:
@@ -81,20 +66,18 @@ def adapt_task_toml(path: Path) -> None:
         r"(?P<value>\d+(?:\.\d+)?)\s*$",
         agent_section,
     )
-    if timeout_match is None:
-        raise ValueError(f"Missing numeric agent timeout_sec in {path}")
-    original_timeout = timeout_match.group("value")
-    adapted_timeout = float(original_timeout) * AGENT_TIMEOUT_MULTIPLIER
-    replacement_timeout = (
-        f"{adapted_timeout:.1f}"
-        if "." in original_timeout
-        else str(int(adapted_timeout))
-    )
+    if timeout_match is None and re.search(
+        r"(?m)^\s*timeout_sec\s*=", agent_section
+    ):
+        raise ValueError(f"Agent timeout_sec must be numeric in {path}")
     adapted_agent_section = (
         'network_mode = "no-network"\n'
-        + agent_section[: timeout_match.start("value")]
-        + replacement_timeout
-        + agent_section[timeout_match.end("value") :]
+        + (
+            agent_section
+            if timeout_match is None
+            else agent_section[: timeout_match.start()]
+            + agent_section[timeout_match.end() :]
+        )
     )
     path.write_text(
         text[: section_match.start("body")]
@@ -291,7 +274,6 @@ def prepare(
     output_root: Path,
     conditions_root: Path,
     assets_root: Path,
-    worker_slots: int = 5,
     condition_plan_path: Path | None = None,
     max_parallel_runs_per_task: int = MAX_PARALLEL_RUNS_PER_TASK,
     scheduler_memory_budget_gb: float = SCHEDULER_MEMORY_BUDGET_GB,
@@ -376,7 +358,7 @@ def prepare(
                 "upstream_digest": upstream_digest,
                 "adaptation": {
                     "agent_network_mode": "no-network",
-                    "agent_timeout_multiplier": AGENT_TIMEOUT_MULTIPLIER,
+                    "agent_timeout_sec": None,
                     "network_overlay": "dynamic-public-with-fixed-model-relay",
                     "preinstalled_packages": preinstalled_packages,
                 },
@@ -419,7 +401,8 @@ def prepare(
             key=lambda item: int(item["execution_order"]),
         )
 
-    worker_tasks = build_worker_tasks(ordered_suite_ids, worker_slots)
+    worker_tasks = build_worker_tasks(ordered_suite_ids)
+    worker_slots = len(worker_tasks)
     worker_plan = {
         worker_id: sorted(
             (run for task_id in task_ids for run in task_runs[task_id]),
@@ -441,10 +424,10 @@ def prepare(
     output_root.mkdir(parents=True, exist_ok=True)
     write_offline_compose(compose_path)
     lock: dict[str, object] = {
-        "schema_version": 2,
+        "schema_version": LOCK_SCHEMA_VERSION,
         "dataset": DATASET,
         "adaptation_version": ADAPTATION_VERSION,
-        "agent_timeout_multiplier": AGENT_TIMEOUT_MULTIPLIER,
+        "agent_timeout_sec": None,
         "run_order_seed": 329,
         "planned_runs": expected_runs,
         "matrix_sha256": sha256_file(matrix_path),
@@ -471,6 +454,7 @@ def prepare(
             "mode": SCHEDULER_MODE,
             "max_parallel_runs_per_task": max_parallel_runs_per_task,
             "memory_budget_gb": scheduler_memory_budget_gb,
+            "max_workers": STANDARD_MAX_WORKERS,
             "priority": "seeded-global-execution-order",
         },
         "offline_compose_path": compose_path.as_posix(),
@@ -501,7 +485,7 @@ def main() -> None:
         default=Path("work/upstream/terminal-bench"),
     )
     parser.add_argument(
-        "--output-root", type=Path, default=Path("work/research-benchmark-dynamic")
+        "--output-root", type=Path, default=Path("work/research-benchmark-standard")
     )
     parser.add_argument(
         "--conditions-root", type=Path, default=Path("evals/conditions")
@@ -513,12 +497,6 @@ def main() -> None:
         "--condition-plan",
         type=Path,
         help="Optional per-task condition plan used to validate a partial matrix",
-    )
-    parser.add_argument(
-        "--worker-slots",
-        type=int,
-        default=5,
-        help="Freeze five balanced task queues or one queue per suite task",
     )
     parser.add_argument(
         "--max-parallel-runs-per-task",
@@ -540,7 +518,6 @@ def main() -> None:
         args.output_root,
         args.conditions_root,
         args.assets_root,
-        args.worker_slots,
         args.condition_plan,
         args.max_parallel_runs_per_task,
         args.scheduler_memory_budget_gb,

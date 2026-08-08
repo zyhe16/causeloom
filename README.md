@@ -125,7 +125,7 @@ five, tied eight, and was worse on none.
 - Terminal-Bench 2.0, 13 problems × 2 conditions × 3 repetitions = 78 runs
 - 3 medium integration/build tasks, 7 extreme systems workflows, 3 targeted
   coverage tasks
-- Four times the upstream agent time limits; no run reached its limit
+- Published a6 run: four times the upstream agent limits; no run reached them
 - Fresh isolated Harbor container and Codex home for every attempt
 - No general internet access during tasks; official automated tests decide
   whether a run passes
@@ -133,12 +133,11 @@ five, tied eight, and was worse on none.
   preserved; the closeout audit found zero violations or warnings
 
 > [!NOTE]
-> We deliberately set the agent time limits to four times the upstream values.
-> A short timeout mixes up two questions: whether a model can solve the problem
-> and whether it can solve it quickly. This run focuses on completion ability,
-> while tokens and elapsed time remain visible as cost diagnostics. All 78 runs
-> finished within the longer limits, so neither condition's pass rate was
-> reduced by timeout censoring.
+> The published a6 evidence used four times the upstream agent limits, and all
+> 78 runs finished before them. The current a7 benchmark standard removes the
+> agent timeout entirely. A fixed cutoff mixes up two questions: whether a
+> model can solve the problem and whether it can solve it quickly. Elapsed time
+> and tokens remain visible as cost diagnostics instead.
 
 A shared seed controls ordering but does not make hosted model trajectories
 deterministic, so every task-condition cell has three repetitions. Technical

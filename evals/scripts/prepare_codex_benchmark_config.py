@@ -9,6 +9,11 @@ import tomllib
 from pathlib import Path
 
 
+STANDARD_MODEL = "gpt-5.6-luna"
+STANDARD_REASONING_EFFORT = "max"
+STANDARD_ROOT = Path("work/research-benchmark-standard")
+
+
 def prepare(
     source: Path,
     output: Path,
@@ -40,10 +45,12 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("work/research-benchmark-dynamic/codex.config.toml"),
+        default=STANDARD_ROOT / "codex.config.toml",
     )
-    parser.add_argument("--expected-model", default="gpt-5.6-sol")
-    parser.add_argument("--expected-reasoning-effort", default="high")
+    parser.add_argument("--expected-model", default=STANDARD_MODEL)
+    parser.add_argument(
+        "--expected-reasoning-effort", default=STANDARD_REASONING_EFFORT
+    )
     args = parser.parse_args()
     prepare(
         args.source,

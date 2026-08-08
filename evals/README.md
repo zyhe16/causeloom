@@ -23,6 +23,48 @@ conditions, and three repetitions. Harbor supplies the task containers and
 official graders. Complete the preflights in `RESEARCH_SUITE.md` before model
 execution.
 
+## Standard benchmark profile
+
+New benchmark preparation and execution use one standard profile:
+
+| Setting | Standard |
+|---|---|
+| Model | `gpt-5.6-luna` |
+| Reasoning effort | `max` |
+| Codex CLI | `0.146.0` |
+| Matrix | 13 tasks x 2 conditions x 3 repetitions = 78 runs |
+| Run-order seed | `329` |
+| Agent timeout | None |
+| Task queues | 13, one per task |
+| Concurrent workers | 8 |
+| Per-task concurrency | 2 repetitions |
+| Declared-memory cap | 20 GB |
+| Run root | `work/research-benchmark-standard` |
+
+`make research-prepare` creates an `a7` lock with these execution settings.
+`prepare_codex_benchmark_config.py` accepts only Luna/max by default and writes
+the isolated config beside that lock. The runner reads the eight-worker cap
+from the lock; passing `--max-workers` is an explicit nonstandard override that
+must be reported.
+
+After the required model-free preflights and readiness marker, the standard
+entrypoints need no benchmark-setting flags:
+
+```bash
+python evals/scripts/prepare_codex_benchmark_config.py
+python evals/scripts/run_research_benchmark.py \
+  --execute \
+  --stop-on-infrastructure-error
+```
+
+The runner defaults to the pinned Codex 0.146.0 Linux binary and SHA-256 used by
+the published Luna run. It still validates every file and locked identity before
+starting.
+
+The agent phase has no watchdog. Harbor verifier, environment-build, and agent
+setup timeouts remain enabled because they detect broken infrastructure rather
+than limit model work.
+
 ## Scripts
 
 | Script | Purpose |
@@ -54,15 +96,12 @@ Newly prepared locks use a work-conserving global scheduler. The seeded global
 execution order remains the priority, but the runner may start a later eligible
 trial when the next trial is blocked by a per-task or memory cap. By default,
 up to two independent repetitions of one task may run concurrently, aggregate
-declared task memory may not exceed 20 GB, and `--max-workers N` remains the
-hard process cap. These values are frozen into the lock and must not be changed
-after preflight.
-
-Locks created before scheduler metadata was introduced keep the legacy
-sequential task-queue behavior on resume. This prevents a tooling upgrade from
-changing an active or completed experiment. Record the scheduler contract,
-actual worker cap, and any fallback attempts because concurrency changes host
+declared task memory may not exceed 20 GB, and eight workers are the hard
+process cap. These values are frozen into the lock and must not be changed
+after preflight. Record any explicit override because concurrency changes host
 contention and makes wall-clock comparisons non-equivalent.
 
 The completed matched Luna a6 summary, chart-ready data, and audit hashes are
-in [`../docs/benchmarks`](../docs/benchmarks/).
+in [`../docs/benchmarks`](../docs/benchmarks/). That historical run used longer
+agent limits; all 78 trials finished before them. The current a7 standard
+removes the agent timeout entirely.

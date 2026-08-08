@@ -59,7 +59,7 @@ def audit_randomness(tasks_root: Path) -> dict[str, object]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--root", type=Path, default=Path("work/research-benchmark-dynamic")
+        "--root", type=Path, default=Path("work/research-benchmark-standard")
     )
     parser.add_argument("--tasks-root", type=Path)
     parser.add_argument("--oracle-job", default="oracle-final")
@@ -68,7 +68,7 @@ def main() -> None:
     args = parser.parse_args()
     lock_path = args.root / "benchmark-lock.json"
     lock = json.loads(lock_path.read_text(encoding="utf-8"))
-    adaptation_version = lock.get("adaptation_version", "a5")
+    adaptation_version = lock.get("adaptation_version", "a7")
     if not isinstance(adaptation_version, str) or not adaptation_version:
         raise SystemExit("Benchmark lock has an invalid adaptation_version")
     tasks_root = args.tasks_root or args.root / f"tasks-{adaptation_version}"

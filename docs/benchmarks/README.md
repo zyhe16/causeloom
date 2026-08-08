@@ -65,6 +65,11 @@ Complete Harbor results, Codex event streams, rollout sessions, trajectories,
 verifier logs, and final code are retained locally under
 `work/research-benchmark-gpt56-luna-max-a6/` and excluded from Git.
 
+> [!NOTE]
+> This directory documents the completed a6 evidence exactly as it ran. New
+> benchmark preparation uses the a7 standard in `evals/`: Luna/max, thirteen
+> one-task queues, eight workers, and no agent timeout.
+
 ## Limits
 
 Official reward measures functional completion, not blinded engineering

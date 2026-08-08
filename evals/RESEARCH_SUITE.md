@@ -121,32 +121,30 @@ Before model runs:
 3. run the official no-op or dummy agent and confirm it fails;
 4. inspect that tests and oracle artifacts are not visible in the agent container;
 5. verify the agent-phase egress probe fails and audit all grader randomness;
-6. pin the same task resources, timeouts, network policy, model, reasoning effort, and Codex version for every condition; and
+6. pin the same task resources, no-agent-timeout policy, network policy, model, reasoning effort, and Codex version for every condition; and
 7. randomize the 78-run order with seed `329` while keeping three repetitions per task-condition pair.
 
-The completed public GPT-5.6 Luna benchmark uses offline adaptation `a6`: four
-times each upstream `[agent].timeout_sec`. Its
-effective agent limits are 60 minutes for M02, M03, X02, X03, X04, X06, C02,
-and C03; 40 minutes for C01; and 120 minutes for M01, X01, X05, and X07.
-Verifier and environment-build timeouts remain unchanged. The published result
-uses only the 78 matched Luna a6 trials; no historical cells are pooled into
-the comparison. All 78 trials finished without an agent timeout.
+The current standard uses offline adaptation `a7`, which removes
+`[agent].timeout_sec` from every adapted task. Harbor therefore resolves the
+agent timeout to `None` and does not stop model work because of elapsed time.
+Verifier, agent-setup, and environment-build timeouts remain infrastructure
+health checks. The standard model is GPT-5.6 Luna with max reasoning on Codex
+CLI 0.146.0.
+
+The completed public GPT-5.6 Luna result remains an a6 historical artifact. It
+used four times each upstream agent limit, but all 78 trials finished before
+those limits. No historical cells are pooled into that comparison.
 
 `prepare_research_benchmark.py` preserves the seeded run identities and global
 execution order in the lock. New locks use a work-conserving global scheduler:
 the seed order is the priority, while a later eligible run may fill an idle slot
-when the next run is blocked. The default frozen limits are two concurrent
-repetitions per task, 20 GB of aggregate declared task memory, and the runtime
-`--max-workers` process cap. Every trial still gets a fresh Harbor environment
-and Codex home. This avoids the long tail produced by one sequential queue per
-task without allowing unbounded same-task or memory-heavy concurrency.
-
-Locks without a `scheduler` section retain the legacy sequential task-queue
-behavior. The completed Luna a6 lock was frozen before this change and used
-that legacy behavior. A new scheduling contract requires a new lock and
-model-free readiness marker. Record the actual cap and any
-fallback attempts, and treat wall-clock comparisons across scheduler contracts
-as non-comparable because host contention changed.
+when the next run is blocked. The frozen limits are thirteen one-task queues,
+eight concurrent workers, two concurrent repetitions per task, and 20 GB of
+aggregate declared task memory. Every trial still gets a fresh Harbor
+environment and Codex home. This avoids the long tail produced by sequential
+multi-task queues without allowing unbounded same-task or memory-heavy
+concurrency. Any explicit worker-cap override is a different execution
+contract and must be reported.
 
 The runner refuses to start until the lock's `MODEL_FREE_READY.json` exists,
 preserves Harbor's resolved locks and raw Codex logs, and exports `/app` for
