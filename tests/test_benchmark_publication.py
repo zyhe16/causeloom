@@ -78,6 +78,8 @@ class BenchmarkPublicationTest(unittest.TestCase):
         self.assertIn("[benchmark](#results)", readme)
         self.assertIn("**33.3% relative improvement**", normalized)
         self.assertIn("Code-quality review", readme)
+        self.assertIn("These are study group names, not scores", readme)
+        self.assertIn("Stopping after a sufficient modernization", readme)
         self.assertIn("### 5. Use the simplest batching rule", readme)
         self.assertNotIn("GPT-5.6 Sol", readme)
         self.assertNotIn("two batches", readme)

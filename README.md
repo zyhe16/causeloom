@@ -94,6 +94,14 @@ cost diagnostic, not a quality score.
 
 ### Where Causeloom was strongest
 
+These are study group names, not scores:
+
+| Group | What it means | Problems included |
+|---|---|---|
+| **Integration and build** | Medium-sized tasks where several tools or services must work together | C++ heap debugging, multi-branch Git deployment, and an instrumented SQLite build |
+| **Extreme systems** | Longer, harder systems tasks with distributed, low-level, performance, recovery, or security constraints | Batching, cross-compilation, WAL recovery, tensor and pipeline parallelism, MIPS emulation, and HTML sanitization |
+| **Targeted coverage** | Extra tasks added to test behaviors the original core did not isolate | Stopping after a sufficient modernization, launching a real gRPC service, and making a surgical vulnerability fix |
+
 ![Matched results by task category](docs/assets/benchmark-luna-by-category.svg)
 
 The largest difference appeared on the seven extreme systems problems:
