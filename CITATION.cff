@@ -11,9 +11,10 @@ date-released: 2026-08-07
 license: MIT
 repository-code: "https://github.com/zyhe16/causeloom"
 abstract: >-
-  An instruction-only coding-agent skill and systematic evaluation framework
-  for root-cause engineering, proportionate rigor, justified lifecycle
-  ownership, and verified closure.
+  A coding-agent skill that traces software problems to their root causes, then
+  weaves requirements, repository evidence, implementation, and verification
+  into solutions that are correct, complete, and no more complex than
+  necessary, with a systematic framework for evaluation.
 keywords:
   - agent-skills
   - coding-agents

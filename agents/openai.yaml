@@ -1,4 +1,4 @@
 interface:
   display_name: "Causeloom"
-  short_description: "Root-cause engineering with verified closure"
+  short_description: "Trace the cause. Weave the solution."
   default_prompt: "Use $causeloom to find the root cause, make the smallest sufficient change, and verify the real outcome."

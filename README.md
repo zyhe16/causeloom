@@ -1,6 +1,6 @@
 <h1 align="center">Causeloom</h1>
 
-<p align="center"><strong>From root cause to verified closure.</strong></p>
+<p align="center"><strong>Trace the cause. Weave the solution.</strong></p>
 
 <p align="center">
   <a href="https://github.com/zyhe16/causeloom/actions/workflows/ci.yml"><img src="https://github.com/zyhe16/causeloom/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -8,9 +8,10 @@
   <img src="https://img.shields.io/badge/license-MIT-356ae6.svg" alt="MIT License">
 </p>
 
-Causeloom is a set of instructions for coding agents. It helps an agent
-understand what you asked for, fix the real cause, test the result people will
-actually use, and avoid unnecessary code.
+Causeloom is a coding-agent skill that traces software problems to their root
+causes, then weaves requirements, repository evidence, implementation, and
+verification into solutions that are correct, complete, and no more complex
+than necessary.
 
 In a matched 78-run [benchmark](#results), Causeloom completed 28 of 39 attempts
 versus 21 of 39 for the same agent without the skill, representing a **33.3%
