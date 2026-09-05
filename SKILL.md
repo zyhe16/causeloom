@@ -1,79 +1,45 @@
 ---
 name: causeloom
-description: Use for coding, debugging, refactoring, code review, and software design. Understand the repository, resolve material ambiguity, make root-cause changes, verify real behavior, and avoid unjustified complexity. Do not use for non-coding work.
+description: Coding, debugging, refactoring, code review, and software design grounded in root causes, existing contracts, and verified behavior.
 ---
 
 # Causeloom
 
-Build the clearest correct, maintainable solution to the actual requirement, with no unjustified code. Optimize lifecycle quality across code, dependencies, configuration, tests, deployment, operations, security, upgrades, and future change.
+Solve the actual requirement at the layer that owns the behavior. Choose the clearest correct solution with the lowest justified cost to maintain. Fewer lines or dependencies are useful only when correctness, security, compatibility, accessibility, and performance hold.
 
-Repository instructions and relevant specialist guidance remain authoritative. Start with the minimum sufficient rigor; escalate only when evidence, uncertainty, scope, or consequences justify it. Simplicity never excuses weaker correctness, security, compatibility, accessibility, performance, or validation.
+Use these decision criteria as needed, without turning each heading into a required phase or written artifact. The user's instructions take precedence over this skill's guidelines. Apply repository requirements and specialist guidance within the requested scope.
 
-## 1. Understand the repository and failure
+## Establish the outcome
 
-- Read repository instructions, follow established conventions, and inspect the narrowest relevant documentation, code, tests, types, callers, and execution path needed to establish the task.
-- Broaden only when the result could change a material decision, acceptance criterion, or risk assessment. Prefer targeted or batched lookups and reuse established findings.
-- For bugs, reproduce the failure when practical and trace the failing data or control path to the layer that owns the violated invariant.
-- Before probing mutable or potentially corrupted state, preserve recoverable evidence or use a verified read-only path; ordinary application tools may mutate state merely by opening it.
+Identify the deliverable, its intended entrypoint, and the behavior and contracts that must hold when finished. For substantial changes, make acceptance criteria explicit, including behavior to preserve and forbidden side effects. A small, clear edit needs no separate planning document.
 
-## 2. Resolve ambiguity by consequence
+Read applicable repository instructions, then use the narrowest relevant code, callers, tests, and documentation to settle the decisions the task requires. Reuse established findings. Expand the search when a concrete uncertainty could change the implementation or its acceptance.
 
-- Resolve ambiguity from repository evidence first. Ask only when an unresolved choice materially changes public behavior, data, compatibility, security, architecture, user-visible semantics, irreversible state, or substantial effort.
-- Support multiple forms only when repository evidence, the observed runtime, a reproduced mismatch, or an explicit requirement establishes them. When joint support is cheap, local, reversible, and safe, normalize once at the owning boundary and reject other forms explicitly. Do not add hypothetical compatibility or hide errors with broad fallbacks, coercion, or swallowing.
-- For low-risk, local, reversible details, follow repository convention or choose the simplest reasonable default and state the assumption briefly. Do not invent material requirements; once scope is clear, implement it fully.
+Resolve choices from the request and repository evidence. Use established conventions for local, reversible details. Ask when a missing decision materially changes scope, public behavior, data, security, compatibility, architecture, or costly work. Continue independent authorized work while that decision is pending.
 
-## 3. Define the real goal and done
+## Change the owning cause
 
-- Identify the requested outcome, final deliverables and entrypoints, affected behavior, constraints, non-goals, public contracts, and negative acceptance criteria: what must not change, which callers must remain valid, and which side effects are forbidden.
-- For targeted transformations, define what may change and the required preservation level—bytes, text, structure, or semantics. Unchanged safe input must remain identical at that level.
-- For concurrent, distributed, staged, transactional, or otherwise multi-owner state, define ownership, lifetime, ordering, cleanup, rollback, and restoration.
-- Translate the goal into observable checks. Establish a failing reproduction or regression check for bugs when practical and baseline behavior for refactors. Use a plan only when materially multi-step.
-- Treat tests as evidence, not the specification. Never hard-code visible cases, weaken tests, bypass the real path, swallow failures, or redefine behavior to make checks pass.
+For a bug, trace the failing path to the violated invariant and its owning layer. Reproduce the symptom when practical. When reproduction is unavailable, use code, logs, and contracts to distinguish confirmed facts from hypotheses; report the remaining verification gap.
 
-## 4. Choose by fit and total ownership
+Prefer an existing capability that fits. Add a dependency, abstraction, compatibility form, or supporting refactor when a present requirement or demonstrated constraint justifies its ongoing cost. If alternatives would change the decision, use a discriminating check; otherwise proceed with the fitting solution.
 
-Discover options in this order: no change when the outcome is already satisfied; an existing repository capability or pattern; native or installed capabilities; a small direct implementation; then a new dependency or abstraction.
+Cover the affected callers at the authoritative boundary. Keep validation, authorization, error handling, and integrity protections there; rely on established internal invariants. Keep every material edit tied to the requested outcome, a relevant contract, or necessary verification. Preserve unrelated work and remove investigative residue from your own changes.
 
-This is not a rigid ranking. Prefer a cleanly fitting existing capability over rebuilding equivalent functionality. Choose the option that satisfies the acceptance criteria with the lowest justified lifecycle cost. Use a later option only when evidence or measurement shows a material benefit; do not justify ownership with hypothetical needs.
+Use these additional constraints when their conditions apply:
 
-When alternatives remain, use the cheapest check that distinguishes them. Commit, discard, or define the next check; stop accumulating alternatives once one satisfies the contracts.
+- **Mutable or corrupted state:** preserve recoverable evidence before a probe that might change it. Opening state through an application can itself mutate it.
+- **Targeted transformations:** establish whether preservation means bytes, text, structure, or semantics. Edit narrowly and check unchanged safe input at that level. Check idempotence when promised.
+- **Compatibility:** support forms established by requirements or observed behavior. Normalize once at the owning boundary and reject unsupported forms explicitly, without hiding failures.
+- **Shared, concurrent, transactional, or staged state:** account for ownership, lifetime, ordering, cleanup, rollback, and restoration where the change affects them.
 
-## 5. Make the authoritative, surgical change
+## Finish and verify
 
-- Put the fix at the authoritative layer that owns the invariant and covers the affected paths, with the smallest safe blast radius. Inspect callers and sibling paths before duplicating guards or broadening shared behavior.
-- Every material edit must support an acceptance criterion, repository contract or convention, or necessary verification. Avoid unrequested features, future scaffolding, generic frameworks, speculative configuration, redundant wrappers, and unrelated refactors.
-- Match existing style and module boundaries. Use a bounded supporting refactor only when needed to place the change correctly, avoid relevant duplication, preserve architecture, or make behavior safely testable.
-- For preservation-sensitive work, edit the original representation as narrowly as practical. Do not normalize, reserialize, or rebuild unaffected content unless the contract permits it and regression checks prove preservation.
-- Preserve required validation, authorization, integrity, transactions, concurrency correctness, migration safety, accessibility, error handling, and data-loss protections at their owning trust boundaries. Once an internal invariant is established, do not duplicate impossible-state checks everywhere.
-- Remove obsolete code, imports, tests, comments, diagnostics, and abandoned investigative hooks. Prefer clear, boring code over clever compression.
+Carry an implementation request through the required edits, execution, inspection, and repair. A first implementation is an intermediate result when the requested outcome still needs verification or fixes. Preserve any review-only or planning-only scope the user chose.
 
-## 6. Verify real behavior proportionately
+Use checks that can expose incorrect behavior through the real path. Expected results come from the requirement or an independent baseline. Never weaken checks, hard-code visible cases, swallow failures, or bypass the intended path to produce a pass.
 
-- Start with the cheapest check capable of falsifying the implementation. Verify coherent increments for significant work; a clear, local, low-risk change may need only a focused check. Broaden only as behavior and risk warrant, and test project contracts rather than the language or framework.
-- Reuse valid environments, dependency caches, and build artifacts. Reinstall or rebuild only when relevant inputs changed, cached state is suspect, or a clean build is needed for reproducibility.
-- Verify the final deliverable through its intended entrypoint and location. For integration, deployment, packaging, or toolchain work, check the externally observable result and required artifacts, not only intermediate success.
-- For multiple supported forms, verify each materially distinct accepted form and at least one rejected form. For preservation-sensitive work, test changed or harmful inputs and unchanged safe inputs; test idempotence when the contract implies it.
-- Correct failures and rerun affected checks. Repeat an expensive check only when relevant inputs changed or its previous result was inconclusive.
-- Once acceptance criteria are met and the strongest focused check warranted by scope and risk passes, stop exploring alternatives. Clean up and run only broader checks justified by scope and risk.
-- Do not claim completion without evidence. State exactly what could not be verified, why, and the remaining risk.
+Run required project checks and the focused validation warranted by the changed behavior. For UI work, inspect the rendered interaction; for packaging or deployment work, verify the final artifact or running result at the requested location. Check materially distinct supported and rejected forms when relevant. Reuse valid environments and results; rerun affected checks after changes or inconclusive results. Broaden testing when scope, failures, or remaining risk justify it.
 
-## 7. Simplify the completed diff
+Finish when the authorized deliverable meets its acceptance criteria and necessary verification passes. Report unmet criteria, blocked actions, or unverified behavior accurately, and finish unaffected work. When further action needs permission, first prepare the concrete result that can safely be reviewed. This skill does not authorize commits, publishing, or external actions on its own.
 
-Before finishing, remove or revise anything that fails these questions:
-
-- Does every abstraction, dependency, adapter, parser, fallback, compatibility branch, configuration option, lifecycle hook, or major subsystem enable a verified case, protect an invariant, or match an established boundary?
-- If the solution grew beyond the apparent requirement, is that growth justified by a current acceptance criterion or demonstrated constraint? Can existing capability replace it without making the solution worse?
-- Did the change patch symptoms, duplicate logic, drift beyond scope, alter behavior that should remain identical, or make checks pass through a shortcut?
-- Did pressure to minimize lines or dependencies produce an inferior solution?
-
-Rerun checks affected by simplification.
-
-## 8. Report clearly and economically
-
-- Lead with the outcome, whether the goal was met, and what verification passed.
-- Explain only the non-obvious decisions and tradeoffs needed to evaluate or continue the work. Distinguish confirmed results, assumptions, and remaining uncertainty.
-- Report relevant deferred work or verification gaps. Do not replay the investigation chronology, list routine tool use, or present a partial shortcut as the completed request.
-
-## Anti-patterns
-
-Coding before reading; disproportionate rigor for clear local work; silent material assumptions; destructive inspection before preservation; premature contract hardening; hypothetical compatibility; context gathering without a decision it can change; exploration after sufficient evidence; treating intermediate success as the final contract; specification gaming; symptom patches; speculative abstractions or dependencies; preservation-breaking normalization; drive-by refactors; duplicated impossible-state handling; hidden failures; test theater; and optimizing for line count instead of justified lifecycle quality.
+Lead the final response with the outcome and evidence. Include the decisions, assumptions, and remaining gaps needed to assess it. Remove complexity that lacks a current justification; repeat only checks affected by that cleanup.
